@@ -18,8 +18,20 @@ js/main.js            data.js 내용을 홈페이지에 그려 주는 코드
 js/admin.js           관리 페이지 동작
 js/admin-schema.js    관리 페이지에 보여줄 메뉴와 입력칸 정의
 js/admin-github.js    GitHub 저장소 읽기·쓰기
+js/theme.js           화면 모드(시스템 · 라이트 · 다크) 전환
+404.html              없는 주소로 들어왔을 때 보이는 페이지
 images/members/       멤버 사진 (관리 페이지에서 올리면 여기에 저장됨)
 favicon.svg           브라우저 탭 아이콘
+```
+
+## 디자인 규칙
+
+디자인은 [elayadesign/ai-design-skills](https://github.com/elayadesign/ai-design-skills)의 `landing-page-design` 시각 규칙을 따릅니다. 색 · 글자 크기 · 간격 · 곡률 · 움직임 값은 `css/style.css` 맨 위 토큰에만 정의되어 있으니, 새 스타일을 만들 때도 숫자를 직접 쓰지 말고 토큰(`var(--s-300)`, `var(--heading-3)` 등)을 써 주세요.
+
+```
+글꼴     Geist (한글은 Pretendard), 숫자는 Geist Mono
+아이콘   Phosphor Icons
+간격     2 · 4 · 8 · 12 · 16 · 24 · 32 · 40 · 48 · 64 · 80 · 96px 만 사용
 ```
 
 ## 내용 수정하기
@@ -75,6 +87,8 @@ favicon.svg           브라우저 탭 아이콘
 ### 도메인을 붙이거나 저장소를 옮겼다면
 
 관리 페이지가 저장할 저장소는 `js/admin.js` 맨 위 `ADMIN_CONFIG`에 적혀 있습니다(`qlab-quant` / `qlab-quant.github.io`). 도메인을 새로 붙이는 것만으로는 바꿀 필요가 없고, 저장소 이름이나 조직을 바꿨을 때만 고쳐 주세요.
+
+도메인을 붙였다면 `index.html` 위쪽의 `canonical`, `og:url` 주소도 새 도메인으로 바꿔 주세요. 검색 엔진과 카카오톡·인스타그램 링크 미리보기가 이 주소를 씁니다.
 
 ## 로컬에서 보기
 
