@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Q-Lab 관리자</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body class="admin">
+  <!-- 로그인 -->
+  <section class="login" id="login-view">
+    <form class="login-card" id="login-form" novalidate>
+      <a href="./" class="logo" aria-label="Q-Lab 홈">
+        <span class="logo-mark">Q</span><span class="logo-text">Lab</span>
+      </a>
+      <div>
+        <h1>관리자 로그인</h1>
+        <p class="login-desc">GitHub 토큰으로 로그인하면 사이트 내용을 고치고 바로 저장할 수 있어요.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="token">GitHub 토큰</label>
+        <input class="input" type="password" id="token" autocomplete="off" spellcheck="false" placeholder="github_pat_..." />
+        <p class="field-help">
+          <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">토큰 만들기 ↗</a>
+          · 만드는 방법은 README의 '관리 페이지' 부분을 참고하세요.
+        </p>
+      </div>
+
+      <details class="repo-settings" id="repo-settings">
+        <summary>저장소 설정</summary>
+        <div class="field-grid">
+          <div class="field half">
+            <label class="field-label" for="repo-owner">GitHub 계정</label>
+            <input class="input" type="text" id="repo-owner" spellcheck="false" placeholder="계정 또는 조직 이름" />
+          </div>
+          <div class="field half">
+            <label class="field-label" for="repo-name">저장소 이름</label>
+            <input class="input" type="text" id="repo-name" spellcheck="false" placeholder="Q-lab-wabpage" />
+          </div>
+          <div class="field half">
+            <label class="field-label" for="repo-branch">브랜치</label>
+            <input class="input" type="text" id="repo-branch" spellcheck="false" placeholder="main" />
+          </div>
+        </div>
+      </details>
+
+      <label class="check">
+        <input type="checkbox" id="remember" />
+        이 기기에서 로그인 유지 (공용 PC에서는 체크하지 마세요)
+      </label>
+
+      <p class="login-error" id="login-error" role="alert"></p>
+      <button class="btn btn-primary btn-block" type="submit" id="login-btn">로그인</button>
+      <button class="link-btn" type="button" id="local-btn" hidden>로그인 없이 로컬에서 편집하기</button>
+    </form>
+  </section>
+
+  <!-- 관리 화면 -->
+  <div class="app" id="app-view" hidden>
+    <header class="admin-header">
+      <div class="admin-header-inner">
+        <a href="./" class="logo" aria-label="Q-Lab 홈">
+          <span class="logo-mark">Q</span><span class="logo-text">Lab</span>
+        </a>
+        <span class="admin-tag">관리자</span>
+        <div class="admin-header-right">
+          <span class="admin-user" id="admin-user"></span>
+          <a class="header-link" href="./" target="_blank" rel="noopener">사이트 보기 ↗</a>
+          <button class="header-link" type="button" id="logout-btn">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="admin-layout">
+      <nav class="admin-nav" id="admin-nav" aria-label="관리 메뉴"></nav>
+      <main class="admin-main" id="admin-main"></main>
+    </div>
+
+    <div class="save-bar">
+      <div class="save-bar-inner">
+        <p class="save-status" id="save-status"></p>
+        <div class="save-actions">
+          <button class="btn btn-ghost btn-sm" type="button" id="revert-btn">되돌리기</button>
+          <button class="btn btn-ghost btn-sm" type="button" id="preview-btn">미리보기</button>
+          <button class="btn btn-primary btn-sm" type="button" id="save-btn">저장하기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="js/admin-github.js"></script>
+  <script src="js/admin-schema.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

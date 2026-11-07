@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Q-Lab | 퀀트 투자 동아리</title>
+  <meta name="description" content="데이터로 시장을 읽고, 코드로 전략을 검증하는 퀀트 투자 동아리 Q-Lab입니다." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header" id="site-header">
+    <div class="container header-inner">
+      <a href="#top" class="logo" aria-label="Q-Lab 홈">
+        <span class="logo-mark">Q</span><span class="logo-text">Lab</span>
+      </a>
+      <nav class="nav" id="nav" aria-label="주요 메뉴">
+        <a href="#about">소개</a>
+        <a href="#activities">활동</a>
+        <a href="#projects">프로젝트</a>
+        <a href="#members">멤버</a>
+        <a href="#recruit">모집</a>
+        <a href="#notice">공지</a>
+      </nav>
+      <button class="menu-btn" id="menu-btn" aria-label="메뉴 열기" aria-expanded="false" aria-controls="nav">
+        <span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="top">
+    <!-- 히어로 -->
+    <section class="hero">
+      <div class="container hero-inner">
+        <div class="hero-text">
+          <p class="eyebrow" data-bind="eyebrow"></p>
+          <h1 data-bind="tagline"></h1>
+          <p class="lead" data-bind="description"></p>
+          <div class="hero-actions">
+            <a href="#recruit" class="btn btn-primary">지원하기</a>
+            <a href="#about" class="btn btn-ghost">더 알아보기</a>
+          </div>
+        </div>
+        <figure class="hero-chart" aria-hidden="true">
+          <figcaption class="chart-label">
+            <span>Q-LAB INDEX</span>
+            <span class="chart-change">▲ since founded</span>
+          </figcaption>
+          <svg id="hero-chart" viewBox="0 0 480 280"></svg>
+        </figure>
+      </div>
+      <div class="container">
+        <dl class="stats" id="stats"></dl>
+      </div>
+    </section>
+
+    <!-- 01 소개 -->
+    <section class="section" id="about">
+      <div class="container">
+        <header class="section-head">
+          <span class="section-num">01</span>
+          <h2>소개</h2>
+        </header>
+        <div class="about-grid">
+          <div class="about-body" id="about-body"></div>
+          <ul class="values" id="values"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 활동 -->
+    <section class="section section-soft" id="activities">
+      <div class="container">
+        <header class="section-head">
+          <span class="section-num">02</span>
+          <h2>활동</h2>
+          <p>한 학기 동안 이런 활동을 함께합니다.</p>
+        </header>
+        <ul class="card-grid" id="activity-list"></ul>
+      </div>
+    </section>
+
+    <!-- 03 프로젝트 -->
+    <section class="section" id="projects">
+      <div class="container">
+        <header class="section-head">
+          <span class="section-num">03</span>
+          <h2>프로젝트</h2>
+          <p>부원들이 직접 리서치하고 검증한 결과물입니다.</p>
+        </header>
+        <ul class="project-list" id="project-list"></ul>
+      </div>
+    </section>
+
+    <!-- 04 멤버 -->
+    <section class="section section-soft" id="members">
+      <div class="container">
+        <header class="section-head">
+          <span class="section-num">04</span>
+          <h2>멤버</h2>
+          <p data-bind="memberTerm"></p>
+        </header>
+        <ul class="member-grid" id="member-list"></ul>
+      </div>
+    </section>
+
+    <!-- 05 모집 -->
+    <section class="section" id="recruit">
+      <div class="container">
+        <header class="section-head">
+          <span class="section-num">05</span>
+          <h2>모집</h2>
+        </header>
+        <div class="recruit-card">
+          <div class="recruit-top">
+            <div>
+              <span class="badge" id="recruit-badge"></span>
+              <h3 id="recruit-title"></h3>
+              <p class="recruit-period" id="recruit-period"></p>
+            </div>
+            <a class="btn btn-primary" id="apply-btn" target="_blank" rel="noopener">지원하기</a>
+          </div>
+          <div class="recruit-grid">
+            <div>
+              <h4>이런 분을 찾습니다</h4>
+              <ul class="check-list" id="recruit-target"></ul>
+            </div>
+            <div>
+              <h4>선발 절차</h4>
+              <ol class="steps" id="recruit-steps"></ol>
+            </div>
+          </div>
+        </div>
+        <div class="faq">
+          <h4>자주 묻는 질문</h4>
+          <div id="faq-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 공지 -->
+    <section class="section section-soft" id="notice">
+      <div class="container">
+        <header class="section-head">
+          <span class="section-num">06</span>
+          <h2>공지</h2>
+        </header>
+        <ul class="notice-list" id="notice-list"></ul>
+        <button class="btn btn-ghost more-btn" id="notice-more" hidden>더보기</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        <p class="footer-name" data-bind="fullName"></p>
+        <p class="footer-sub" data-bind="university"></p>
+      </div>
+      <ul class="contact-list" id="contact-list"></ul>
+    </div>
+    <div class="container">
+      <p class="copyright" id="copyright"></p>
+    </div>
+  </footer>
+
+  <!-- 내용은 관리 페이지(admin.html) 또는 js/data.js에서 수정하세요. data.js는 main.js가 불러옵니다. -->
+  <script src="js/main.js"></script>
+</body>
+</html>
