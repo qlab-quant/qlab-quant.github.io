@@ -155,22 +155,25 @@ function toast(message, type = "info", duration = 4000) {
   toastTimer = setTimeout(() => el.classList.remove("show"), duration);
 }
 
-function describeError(err) {
+// login: 로그인(읽기) 단계의 오류인지. 같은 403이라도 원인이 다르다.
+function describeError(err, { login = false } = {}) {
   if (err instanceof SyntaxError) {
     return "data.js 형식이 올바르지 않아 읽을 수 없어요. 마지막으로 직접 고친 부분을 확인해 주세요.";
   }
-  switch (err.status) {
-    case 401:
-      return "토큰이 올바르지 않거나 만료됐어요. 새 토큰으로 다시 로그인해 주세요.";
-    case 403:
-      return "이 토큰으로는 저장소에 쓸 권한이 없어요. 토큰의 Contents 권한이 'Read and write'인지 확인해 주세요.";
-    case 404:
-      return "저장소나 파일을 찾을 수 없어요. 저장소 설정과 토큰의 저장소 접근 권한을 확인해 주세요.";
-    case undefined:
-      return err instanceof TypeError ? "네트워크 오류가 났어요. 인터넷 연결을 확인해 주세요." : err.message;
-    default:
-      return `GitHub 오류(${err.status}): ${err.message}`;
+  if (err.status === undefined) {
+    return err instanceof TypeError ? "네트워크 오류가 났어요. 인터넷 연결을 확인해 주세요." : err.message;
   }
+
+  const owner = ADMIN_CONFIG.owner || "조직";
+  const messages = {
+    401: "토큰이 올바르지 않거나 만료됐어요. 새 토큰으로 다시 로그인해 주세요.",
+    403: login
+      ? `이 토큰으로 저장소에 접근할 수 없어요. 토큰의 Resource owner가 ${owner}인지, Repository access에서 이 저장소를 골랐는지, ${owner}의 승인을 기다리는 중은 아닌지 확인해 주세요.`
+      : "이 토큰으로는 저장소에 쓸 권한이 없어요. 토큰의 Contents 권한이 'Read and write'인지 확인해 주세요.",
+    404: "저장소나 파일을 찾을 수 없어요. 저장소 설정과 토큰의 저장소 접근 권한을 확인해 주세요.",
+  };
+  // 원인을 찾기 쉽도록 GitHub이 보낸 원래 메시지도 함께 보여 준다
+  return `${messages[err.status] ?? "GitHub에서 오류가 났어요."} (GitHub ${err.status}: ${err.message})`;
 }
 
 /* ─────────────── 입력칸 ─────────────── */
@@ -618,7 +621,7 @@ async function handleLogin(event) {
     storage.set(STORAGE_KEYS.token, token, $("#remember").checked);
     $("#token").value = "";
   } catch (err) {
-    showLoginError(describeError(err));
+    showLoginError(describeError(err, { login: true }));
   } finally {
     setLoginBusy(false);
   }
@@ -657,7 +660,7 @@ async function init() {
     await loginWithGitHub(repo, token);
   } catch (err) {
     if (err.status === 401) storage.remove(STORAGE_KEYS.token);
-    showLoginError(describeError(err));
+    showLoginError(describeError(err, { login: true }));
   } finally {
     setLoginBusy(false);
   }
