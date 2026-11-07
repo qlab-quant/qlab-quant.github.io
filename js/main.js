@@ -4,6 +4,7 @@ const $ = (sel) => document.querySelector(sel);
 
 const PREVIEW_KEY = "qlab-preview";
 const isPreview = new URLSearchParams(location.search).has("preview");
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let DATA;
 
 function esc(value = "") {
@@ -16,6 +17,7 @@ function esc(value = "") {
 const multiline = (value) => esc(value).replace(/\n/g, "<br>");
 
 const pad2 = (n) => String(n).padStart(2, "0");
+const icon = (name) => `<i class="ph ph-${name}" aria-hidden="true"></i>`;
 
 // javascript: 처럼 위험한 주소는 링크로 쓰지 않는다
 function safeUrl(url = "") {
@@ -47,6 +49,43 @@ function readPreviewData() {
   }
 }
 
+/* ── 모집 상태와 지원 버튼 ── */
+const RECRUIT_STATUS = {
+  open: { label: "모집 중", button: "지원하기" },
+  upcoming: { label: "모집 예정", button: "모집 예정" },
+  closed: { label: "모집 마감", button: "모집 마감" },
+};
+
+const recruitStatus = () => RECRUIT_STATUS[DATA.recruit.status] ?? RECRUIT_STATUS.closed;
+
+// 첫 화면 · 메뉴 · 마지막 안내의 버튼은 모두 같은 곳으로 보낸다
+function ctaInfo() {
+  const applyUrl = safeUrl(DATA.recruit.applyUrl);
+  if (DATA.recruit.status === "open" && applyUrl) {
+    return { label: "지원서 작성하기", href: applyUrl, external: true };
+  }
+  const label = DATA.recruit.status === "upcoming" ? "모집 일정 보기" : "모집 안내 보기";
+  return { label, href: "#recruit", external: false };
+}
+
+function renderCtas() {
+  const cta = ctaInfo();
+  document.querySelectorAll("[data-cta]").forEach((a) => {
+    a.href = cta.href;
+    a.innerHTML = `${esc(cta.label)} ${icon(cta.external ? "arrow-up-right" : "arrow-right")}`;
+    if (cta.external) {
+      a.target = "_blank";
+      a.rel = "noopener";
+    } else {
+      a.removeAttribute("target");
+      a.removeAttribute("rel");
+    }
+  });
+
+  const period = DATA.recruit.period ? ` · ${DATA.recruit.period}` : "";
+  $("#hero-note").textContent = `${recruitStatus().label}${period}`;
+}
+
 /* ── 텍스트 바인딩 ── */
 function renderBindings() {
   const values = {
@@ -62,45 +101,52 @@ function renderBindings() {
   });
 }
 
-/* ── 히어로 차트 (장식용 랜덤워크) ── */
+/* ── 히어로 차트 (장식용 랜덤워크, 카드 너비에 맞춰 다시 그린다) ── */
+let chartWidth = 0;
+
 function renderHeroChart() {
   const svg = $("#hero-chart");
-  const W = 480, H = 280, N = 72, PAD = 20;
+  const W = Math.round(svg.clientWidth);
+  const H = Math.round(svg.clientHeight);
+  if (!W || W === chartWidth) return;
+  if (chartWidth) svg.classList.add("static"); // 처음 한 번만 애니메이션
+  chartWidth = W;
 
   // 매번 같은 모양이 나오도록 시드 고정 난수
   let seed = 20;
   const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-
+  const N = W < 480 ? 48 : 96;
   const series = [];
   let v = 0;
   for (let i = 0; i < N; i++) {
     v += rand() - 0.42;
     series.push(v);
   }
+
+  const PAD = 8;
   const min = Math.min(...series);
   const max = Math.max(...series);
   const pts = series.map((s, i) => [
-    (i / (N - 1)) * W,
+    PAD + (i / (N - 1)) * (W - PAD * 2),
     H - PAD - ((s - min) / (max - min)) * (H - PAD * 2),
   ]);
-
   const line = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join("");
-  const area = `${line}L${W},${H}L0,${H}Z`;
+  const area = `${line}L${W - PAD},${H}L${PAD},${H}Z`;
   const [lastX, lastY] = pts[pts.length - 1];
   const grid = [1, 2, 3]
     .map((i) => `<line x1="0" x2="${W}" y1="${(H / 4) * i}" y2="${(H / 4) * i}" />`)
     .join("");
 
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = `
     <defs>
-      <linearGradient id="chart-fill" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" style="stop-color:var(--accent);stop-opacity:.16" />
-        <stop offset="1" style="stop-color:var(--accent);stop-opacity:0" />
-      </linearGradient>
+      <clipPath id="chart-clip"><rect class="chart-reveal" width="${W}" height="${H}" /></clipPath>
     </defs>
     <g class="chart-grid">${grid}</g>
-    <path class="chart-area" d="${area}" fill="url(#chart-fill)" />
-    <path class="chart-line" d="${line}" pathLength="1" />
+    <g clip-path="url(#chart-clip)">
+      <path class="chart-area" d="${area}" />
+      <path class="chart-line" d="${line}" />
+    </g>
     <circle class="chart-dot" cx="${lastX}" cy="${lastY}" r="5" />
   `;
 }
@@ -112,12 +158,50 @@ function renderStats() {
     .join("");
 }
 
+/* ── 큰 문구: 스크롤 진행에 맞춰 단어를 읽는 순서대로 하나씩 켠다 ── */
+function renderTagline() {
+  const el = $("#tagline");
+  const text = DATA.site.manifesto || DATA.site.tagline || "";
+  el.innerHTML = text
+    .split("\n")
+    .map((line) => line.split(/\s+/).filter(Boolean).map((w) => `<span class="word">${esc(w)}</span>`).join(" "))
+    .join("<br>");
+
+  const words = [...el.querySelectorAll(".word")];
+  if (reduceMotion) {
+    words.forEach((w) => w.classList.add("is-on"));
+    return;
+  }
+
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const rect = el.getBoundingClientRect();
+    // 문단 윗부분이 화면 80% 지점에 오면 시작, 아랫부분이 35% 지점을 지나면 모두 켜짐
+    const start = innerHeight * 0.8;
+    const end = innerHeight * 0.35;
+    const progress = Math.min(1, Math.max(0, (start - rect.top) / (start - end + rect.height)));
+    const count = Math.round(progress * words.length);
+    words.forEach((w, i) => w.classList.toggle("is-on", i < count));
+  };
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(update);
+  };
+  addEventListener("scroll", onScroll, { passive: true });
+  addEventListener("resize", onScroll);
+  update();
+}
+
 /* ── 소개 ── */
+const VALUE_ICONS = ["books", "code", "chart-line-up", "users-three", "lightbulb"];
+
 function renderAbout() {
   $("#about-body").innerHTML = (DATA.about.paragraphs ?? []).map((p) => `<p>${multiline(p)}</p>`).join("");
   $("#values").innerHTML = listHtml(DATA.about.values, (v, i) => `
     <li class="value">
-      <span class="value-num">${pad2(i + 1)}</span>
+      <span class="value-icon">${icon(VALUE_ICONS[i % VALUE_ICONS.length])}</span>
       <div>
         <h3>${esc(v.title)}</h3>
         <p>${esc(v.desc)}</p>
@@ -127,9 +211,12 @@ function renderAbout() {
 
 /* ── 활동 ── */
 function renderActivities() {
-  $("#activity-list").innerHTML = listHtml(DATA.activities, (a) => `
+  $("#activity-list").innerHTML = listHtml(DATA.activities, (a, i) => `
     <li class="card">
-      <span class="card-tag">${esc(a.cycle)}</span>
+      <div class="card-head">
+        <span class="card-tag">${esc(a.cycle)}</span>
+        <span class="card-num">${pad2(i + 1)}</span>
+      </div>
       <h3>${esc(a.title)}</h3>
       <p>${esc(a.desc)}</p>
     </li>`);
@@ -141,7 +228,7 @@ function renderProjects() {
     const tags = (p.tags ?? []).map((t) => `<span class="tag">${esc(t)}</span>`).join("");
     const link = safeUrl(p.link);
     const title = link
-      ? `<a href="${esc(link)}" target="_blank" rel="noopener">${esc(p.title)} <span aria-hidden="true">↗</span></a>`
+      ? `<a href="${esc(link)}" target="_blank" rel="noopener">${esc(p.title)} ${icon("arrow-up-right")}</a>`
       : esc(p.title);
     return `
       <li class="project">
@@ -176,34 +263,35 @@ function renderMembers() {
 }
 
 /* ── 모집 ── */
-const RECRUIT_STATUS = {
-  open: { label: "모집 중", button: "지원하기" },
-  upcoming: { label: "모집 예정", button: "모집 예정" },
-  closed: { label: "모집 마감", button: "모집 마감" },
-};
-
 function renderRecruit() {
   const recruit = DATA.recruit;
-  const status = RECRUIT_STATUS[recruit.status] ?? RECRUIT_STATUS.closed;
+  const status = recruitStatus();
   const applyUrl = safeUrl(recruit.applyUrl);
 
-  const badge = $("#recruit-badge");
-  badge.textContent = status.label;
-  badge.dataset.status = recruit.status;
+  ["#recruit-badge", "#cta-badge"].forEach((sel) => {
+    const badge = $(sel);
+    badge.textContent = status.label;
+    badge.dataset.status = recruit.status;
+  });
 
   $("#recruit-title").textContent = recruit.title;
   $("#recruit-period").textContent = recruit.period;
+  $("#cta-title").textContent = recruit.title;
+  $("#cta-period").textContent = recruit.period;
 
   const btn = $("#apply-btn");
-  btn.textContent = status.button;
   if (recruit.status === "open" && applyUrl) {
     btn.href = applyUrl;
+    btn.innerHTML = `${esc(status.button)} ${icon("arrow-up-right")}`;
   } else {
+    btn.textContent = status.button;
     btn.removeAttribute("href");
     btn.setAttribute("aria-disabled", "true");
   }
 
-  $("#recruit-target").innerHTML = (recruit.target ?? []).map((t) => `<li>${esc(t)}</li>`).join("");
+  $("#recruit-target").innerHTML = (recruit.target ?? [])
+    .map((t) => `<li>${icon("check-circle")}<span>${esc(t)}</span></li>`)
+    .join("");
   $("#recruit-steps").innerHTML = (recruit.steps ?? [])
     .map((s, i) => `
       <li class="step">
@@ -216,7 +304,7 @@ function renderRecruit() {
   $("#faq-list").innerHTML = (recruit.faq ?? [])
     .map((f) => `
       <details class="faq-item">
-        <summary>${esc(f.q)}</summary>
+        <summary><span>${esc(f.q)}</span>${icon("caret-down")}</summary>
         <p>${multiline(f.a)}</p>
       </details>`)
     .join("");
@@ -239,6 +327,7 @@ function renderNotices() {
             <span class="notice-cat">${esc(n.category)}</span>
             <span class="notice-title">${esc(n.title)}</span>
             <time datetime="${esc(n.date)}">${esc(String(n.date).replace(/-/g, "."))}</time>
+            ${icon("caret-down")}
           </summary>
           <div class="notice-body"><p>${multiline(n.body)}</p></div>
         </details>
@@ -257,15 +346,15 @@ function renderNotices() {
 function renderFooter() {
   const { email, instagram, github } = DATA.site.contact ?? {};
   const links = [
-    email && { label: "Email", text: email, href: `mailto:${email}` },
-    safeUrl(instagram) && { label: "Instagram", text: "Instagram", href: safeUrl(instagram) },
-    safeUrl(github) && { label: "GitHub", text: "GitHub", href: safeUrl(github) },
+    email && { icon: "envelope-simple", text: email, href: `mailto:${email}` },
+    safeUrl(instagram) && { icon: "instagram-logo", text: "Instagram", href: safeUrl(instagram) },
+    safeUrl(github) && { icon: "github-logo", text: "GitHub", href: safeUrl(github) },
   ].filter(Boolean);
 
   $("#contact-list").innerHTML = links
     .map((l) => {
       const external = l.href.startsWith("http") ? ' target="_blank" rel="noopener"' : "";
-      return `<li><span>${esc(l.label)}</span><a href="${esc(l.href)}"${external}>${esc(l.text)}</a></li>`;
+      return `<li><a href="${esc(l.href)}"${external}>${icon(l.icon)}${esc(l.text)}</a></li>`;
     })
     .join("");
 
@@ -287,28 +376,51 @@ function renderPreviewBanner() {
   document.body.append(banner);
 }
 
-/* ── 헤더 · 모바일 메뉴 · 현재 섹션 표시 ── */
+/* ── 스크롤하면 섹션이 살짝 올라오며 나타남 (한 번만) ── */
+function setupReveal() {
+  const items = document.querySelectorAll("[data-reveal]");
+  if (!("IntersectionObserver" in window)) {
+    items.forEach((el) => el.classList.add("is-visible"));
+    return;
+  }
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      });
+    },
+    { rootMargin: "0px 0px -10% 0px" }
+  );
+  items.forEach((el) => observer.observe(el));
+}
+
+/* ── 내비게이션 · 모바일 메뉴 · 현재 섹션 표시 ── */
 function setupNav() {
-  const header = $("#site-header");
-  const nav = $("#nav");
   const menuBtn = $("#menu-btn");
+  const mobileMenu = $("#mobile-menu");
 
   const setMenu = (open) => {
     document.body.classList.toggle("menu-open", open);
     menuBtn.setAttribute("aria-expanded", String(open));
     menuBtn.setAttribute("aria-label", open ? "메뉴 닫기" : "메뉴 열기");
+    mobileMenu.inert = !open;
   };
+  const isOpen = () => document.body.classList.contains("menu-open");
 
-  menuBtn.addEventListener("click", () => setMenu(!document.body.classList.contains("menu-open")));
-  nav.addEventListener("click", (e) => {
+  menuBtn.addEventListener("click", () => setMenu(!isOpen()));
+  mobileMenu.addEventListener("click", (e) => {
     if (e.target.closest("a")) setMenu(false);
   });
+  addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isOpen()) setMenu(false);
+  });
+  matchMedia("(min-width: 821px)").addEventListener("change", (e) => {
+    if (e.matches) setMenu(false);
+  });
 
-  const onScroll = () => header.classList.toggle("scrolled", window.scrollY > 8);
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
-
-  const links = [...nav.querySelectorAll("a")];
+  const links = [...document.querySelectorAll("#nav a")];
   const observer = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
@@ -323,7 +435,9 @@ function setupNav() {
 
 async function start() {
   setupNav();
+  setupReveal();
   renderHeroChart();
+  addEventListener("resize", () => requestAnimationFrame(renderHeroChart));
   if (!isPreview) showAdminShortcut();
 
   const preview = isPreview && readPreviewData();
@@ -331,7 +445,9 @@ async function start() {
   DATA = preview || window.SITE_DATA;
 
   renderBindings();
+  renderCtas();
   renderStats();
+  renderTagline();
   renderAbout();
   renderActivities();
   renderProjects();

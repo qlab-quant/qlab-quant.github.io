@@ -189,6 +189,13 @@ const ADMIN_SECTIONS = [
       { key: "site.tagline", label: "첫 화면 큰 문구", type: "textarea", rows: 2, help: "줄바꿈이 사이트에도 그대로 반영돼요." },
       { key: "site.description", label: "첫 화면 소개 문장", type: "textarea", rows: 3 },
       {
+        key: "site.manifesto",
+        label: "큰 문구 섹션",
+        type: "textarea",
+        rows: 3,
+        help: "첫 화면 아래에 크게 보이고, 스크롤하면 단어가 하나씩 켜져요. 줄바꿈 그대로 두세 줄로 써 주세요.",
+      },
+      {
         key: "site.stats",
         label: "숫자 통계",
         type: "list",

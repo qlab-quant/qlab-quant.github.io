@@ -65,9 +65,9 @@
 .input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: 10px;
-  background: var(--surface);
+  background: var(--bg-soft);
   color: var(--text);
   font: inherit;
   font-size: 15px;

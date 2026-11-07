@@ -4,24 +4,38 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Q-Lab | 퀀트 투자 동아리</title>
-  <meta name="description" content="데이터로 시장을 읽고, 코드로 전략을 검증하는 퀀트 투자 동아리 Q-Lab입니다." />
+  <meta name="description" content="데이터로 시장을 읽고 코드로 전략을 검증하는 퀀트 투자 동아리 Q-Lab입니다." />
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+  <link rel="canonical" href="https://qlab-quant.github.io/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Q-Lab" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:url" content="https://qlab-quant.github.io/" />
+  <meta property="og:title" content="Q-Lab | 퀀트 투자 동아리" />
+  <meta property="og:description" content="데이터로 시장을 읽고 코드로 전략을 검증하는 퀀트 투자 동아리 Q-Lab입니다." />
+  <meta name="twitter:card" content="summary" />
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
 
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
   <link rel="stylesheet" href="css/style.css" />
   <script src="js/theme.js"></script>
 </head>
 <body>
-  <header class="site-header" id="site-header">
-    <div class="container header-inner">
-      <a href="#top" class="logo" aria-label="Q-Lab 홈">
+  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+
+  <!-- 화면 위에 떠 있는 내비게이션 -->
+  <header class="site-nav">
+    <div class="nav-inner">
+      <a href="#top" class="logo" aria-label="Q-Lab 처음으로">
         <span class="logo-mark">Q</span><span class="logo-text">Lab</span>
       </a>
-      <nav class="nav" id="nav" aria-label="주요 메뉴">
+      <nav class="nav-links" id="nav" aria-label="주요 메뉴">
         <a href="#about">소개</a>
         <a href="#activities">활동</a>
         <a href="#projects">프로젝트</a>
@@ -30,41 +44,63 @@
         <a href="#notice">공지</a>
       </nav>
       <button class="theme-btn" type="button" data-theme-toggle></button>
-      <button class="menu-btn" id="menu-btn" aria-label="메뉴 열기" aria-expanded="false" aria-controls="nav">
+      <a class="btn btn-primary btn-sm nav-cta" href="#recruit" data-cta>지원하기</a>
+      <button class="menu-btn" id="menu-btn" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="mobile-menu">
         <span></span><span></span>
       </button>
     </div>
   </header>
 
-  <main id="top">
+  <div class="mobile-menu" id="mobile-menu" inert>
+    <nav aria-label="모바일 메뉴">
+      <a href="#about" style="--i: 0">소개</a>
+      <a href="#activities" style="--i: 1">활동</a>
+      <a href="#projects" style="--i: 2">프로젝트</a>
+      <a href="#members" style="--i: 3">멤버</a>
+      <a href="#recruit" style="--i: 4">모집</a>
+      <a href="#notice" style="--i: 5">공지</a>
+      <a class="btn btn-primary" href="#recruit" style="--i: 6" data-cta>지원하기</a>
+    </nav>
+  </div>
+
+  <main id="main">
     <!-- 히어로 -->
-    <section class="hero">
+    <section class="hero" id="top">
       <div class="container hero-inner">
-        <div class="hero-text">
-          <p class="eyebrow" data-bind="eyebrow"></p>
-          <h1 data-bind="tagline"></h1>
-          <p class="lead" data-bind="description"></p>
-          <div class="hero-actions">
-            <a href="#recruit" class="btn btn-primary">지원하기</a>
-            <a href="#about" class="btn btn-ghost">더 알아보기</a>
-          </div>
+        <p class="eyebrow" data-bind="eyebrow"></p>
+        <h1 class="hero-title" data-bind="tagline"></h1>
+        <p class="hero-sub" data-bind="description"></p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#recruit" data-cta>지원하기</a>
+          <p class="hero-note" id="hero-note"></p>
         </div>
-        <figure class="hero-chart" aria-hidden="true">
-          <figcaption class="chart-label">
-            <span>Q-LAB INDEX</span>
-            <span class="chart-change">▲ since founded</span>
-          </figcaption>
-          <svg id="hero-chart" viewBox="0 0 480 280"></svg>
-        </figure>
       </div>
       <div class="container">
-        <dl class="stats" id="stats"></dl>
+        <figure class="hero-visual" data-reveal>
+          <div class="chart-card">
+            <dl class="stats" id="stats"></dl>
+            <div class="chart-wrap" aria-hidden="true">
+              <div class="chart-head">
+                <span>Q-LAB INDEX</span>
+                <span class="chart-change"><i class="ph ph-trend-up"></i>since founded</span>
+              </div>
+              <svg id="hero-chart"></svg>
+            </div>
+          </div>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 큰 문구: 스크롤하면 단어가 하나씩 켜진다 -->
+    <section class="tagline-section" aria-label="Q-Lab이 하는 일">
+      <div class="container">
+        <p class="tagline" id="tagline"></p>
       </div>
     </section>
 
     <!-- 01 소개 -->
-    <section class="section" id="about">
-      <div class="container">
+    <section class="section section-soft" id="about">
+      <div class="container" data-reveal>
         <header class="section-head">
           <span class="section-num">01</span>
           <h2>소개</h2>
@@ -77,8 +113,8 @@
     </section>
 
     <!-- 02 활동 -->
-    <section class="section section-soft" id="activities">
-      <div class="container">
+    <section class="section" id="activities">
+      <div class="container" data-reveal>
         <header class="section-head">
           <span class="section-num">02</span>
           <h2>활동</h2>
@@ -89,8 +125,8 @@
     </section>
 
     <!-- 03 프로젝트 -->
-    <section class="section" id="projects">
-      <div class="container">
+    <section class="section section-soft" id="projects">
+      <div class="container" data-reveal>
         <header class="section-head">
           <span class="section-num">03</span>
           <h2>프로젝트</h2>
@@ -101,8 +137,8 @@
     </section>
 
     <!-- 04 멤버 -->
-    <section class="section section-soft" id="members">
-      <div class="container">
+    <section class="section" id="members">
+      <div class="container" data-reveal>
         <header class="section-head">
           <span class="section-num">04</span>
           <h2>멤버</h2>
@@ -113,8 +149,8 @@
     </section>
 
     <!-- 05 모집 -->
-    <section class="section" id="recruit">
-      <div class="container">
+    <section class="section section-soft" id="recruit">
+      <div class="container" data-reveal>
         <header class="section-head">
           <span class="section-num">05</span>
           <h2>모집</h2>
@@ -141,20 +177,32 @@
         </div>
         <div class="faq">
           <h4>자주 묻는 질문</h4>
-          <div id="faq-list"></div>
+          <div class="faq-list" id="faq-list"></div>
         </div>
       </div>
     </section>
 
     <!-- 06 공지 -->
-    <section class="section section-soft" id="notice">
-      <div class="container">
+    <section class="section" id="notice">
+      <div class="container" data-reveal>
         <header class="section-head">
           <span class="section-num">06</span>
           <h2>공지</h2>
         </header>
         <ul class="notice-list" id="notice-list"></ul>
-        <button class="btn btn-ghost more-btn" id="notice-more" hidden>더보기</button>
+        <button class="btn btn-ghost more-btn" id="notice-more" type="button" hidden>공지 더 보기</button>
+      </div>
+    </section>
+
+    <!-- 마지막 지원 안내 (첫 화면의 버튼과 같은 동작) -->
+    <section class="cta-section">
+      <div class="container">
+        <div class="cta-card" data-reveal>
+          <span class="badge" id="cta-badge"></span>
+          <h2 id="cta-title"></h2>
+          <p id="cta-period"></p>
+          <a class="btn btn-primary" href="#recruit" data-cta>지원하기</a>
+        </div>
       </div>
     </section>
   </main>
@@ -174,7 +222,7 @@
   </footer>
 
   <!-- 관리 페이지에 로그인한 운영진에게만 보인다 -->
-  <a class="admin-fab" id="admin-fab" href="admin.html" hidden>관리 페이지 ↗</a>
+  <a class="btn btn-primary btn-sm admin-fab" id="admin-fab" href="admin.html" hidden>관리 페이지 <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a>
 
   <!-- 내용은 관리 페이지(admin.html) 또는 js/data.js에서 수정하세요. data.js는 main.js가 불러옵니다. -->
   <script src="js/main.js"></script>

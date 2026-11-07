@@ -10,6 +10,7 @@ window.SITE_DATA = {
     "university": "OO대학교 중앙동아리",
     "tagline": "데이터로 시장을 읽고,\n코드로 전략을 검증합니다.",
     "description": "Q-Lab은 금융공학, 통계, 프로그래밍을 바탕으로 체계적인 투자 전략을 연구하는 퀀트 투자 동아리입니다.",
+    "manifesto": "감이 아니라 데이터로 판단하고\n말이 아니라 백테스트로 증명합니다.\n그 과정을 함께할 사람을 찾고 있어요.",
     "stats": [
       { "value": "20XX", "label": "설립" },
       { "value": "OO명", "label": "누적 부원" },
