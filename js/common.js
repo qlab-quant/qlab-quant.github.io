@@ -75,7 +75,7 @@ function ctaInfo(data) {
     return { label: "지원서 작성하기", href: applyUrl, external: true };
   }
   const label = data.recruit.status === "upcoming" ? "모집 일정 보기" : "모집 안내 보기";
-  return { label, href: PAGE === "home" ? "#recruit" : pageUrl("./") + "#recruit", external: false };
+  return { label, href: pageUrl("recruit.html"), external: false };
 }
 
 function renderCtas(data) {
@@ -95,12 +95,12 @@ function renderCtas(data) {
 
 /* ── 내비게이션 · 모바일 메뉴 · 푸터 (모든 페이지 공통) ── */
 const NAV_ITEMS = [
-  { label: "소개", hash: "about" },
+  { label: "홈", hash: "top" },
   { label: "활동", hash: "activities" },
   { label: "리서치", page: "research" },
   { label: "갤러리", page: "gallery" },
-  { label: "모집", hash: "recruit" },
-  { label: "공지", hash: "notice" },
+  { label: "모집", page: "recruit" },
+  { label: "공지", page: "notice" },
 ];
 
 const navHref = (item) => {
@@ -119,7 +119,7 @@ function renderShell() {
         ${NAV_ITEMS.map((item) => `<a href="${navHref(item)}"${current(item)}>${item.label}</a>`).join("")}
       </nav>
       <button class="theme-btn" type="button" data-theme-toggle></button>
-      <a class="btn btn-primary btn-sm nav-cta" href="${pageUrl("./")}#recruit" data-cta>지원하기</a>
+      <a class="btn btn-primary btn-sm nav-cta" href="${pageUrl("recruit.html")}" data-cta>지원하기</a>
       <button class="menu-btn" id="menu-btn" type="button" aria-label="메뉴 열기" aria-expanded="false" aria-controls="mobile-menu">
         <span></span><span></span>
       </button>
@@ -128,7 +128,7 @@ function renderShell() {
   $("#mobile-menu").innerHTML = `
     <nav aria-label="모바일 메뉴">
       ${NAV_ITEMS.map((item, i) => `<a href="${navHref(item)}" style="--i: ${i}"${current(item)}>${item.label}</a>`).join("")}
-      <a class="btn btn-primary" href="${pageUrl("./")}#recruit" style="--i: ${NAV_ITEMS.length}" data-cta>지원하기</a>
+      <a class="btn btn-primary" href="${pageUrl("recruit.html")}" style="--i: ${NAV_ITEMS.length}" data-cta>지원하기</a>
     </nav>`;
 
   $("#site-footer").innerHTML = `

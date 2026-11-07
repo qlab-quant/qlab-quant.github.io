@@ -11,6 +11,8 @@
 ```
 index.html            홈페이지
 research.html         리서치 페이지 (목록 · 글 · 코드 저장소)
+recruit.html          모집 페이지 (모집 안내 · 선발 절차 · 자주 묻는 질문)
+notice.html           공지 페이지
 gallery.html          갤러리 (회원 게시판)
 admin.html            관리 페이지 (운영진 전용)
 404.html              없는 주소로 들어왔을 때 보이는 페이지
@@ -20,6 +22,8 @@ js/data.js            ← 사이트에 들어가는 모든 내용
 js/common.js          모든 페이지 공통: 내비게이션, 푸터, 내용 불러오기
 js/main.js            홈페이지 그리기
 js/research.js        리서치 페이지 그리기 (마크다운 · 수식 · GitHub 저장소 정보)
+js/recruit.js         모집 페이지 그리기
+js/notice.js          공지 페이지 그리기
 js/gallery.js         갤러리 화면
 js/gallery-api.js     갤러리 ↔ Supabase 연결
 js/gallery-config.js  갤러리가 쓰는 Supabase 주소와 공개 키

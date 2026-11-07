@@ -755,11 +755,13 @@ function revert() {
 }
 
 // 저장 전 내용(리서치 본문 포함)을 넘겨 주고, 보고 있던 메뉴에 맞는 페이지를 연다
+const PREVIEW_PAGES = { research: "research.html", recruit: "recruit.html", notices: "notice.html" };
+
 function openPreview() {
   storage.set(STORAGE_KEYS.preview, JSON.stringify(state.data));
   const files = Object.fromEntries(Object.entries(state.files).map(([path, f]) => [path, f.text]));
   storage.set(STORAGE_KEYS.previewFiles, JSON.stringify(files));
-  window.open(state.section === "research" ? "research.html?preview" : "index.html?preview", "qlab-preview");
+  window.open(`${PREVIEW_PAGES[state.section] ?? "index.html"}?preview`, "qlab-preview");
 }
 
 function downloadFile(name, text) {

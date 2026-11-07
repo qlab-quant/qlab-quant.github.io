@@ -3,6 +3,10 @@
 
 let DATA;
 
+// 모집 · 공지는 따로 페이지가 생겼다. 예전 주소(#recruit, #notice)로 들어오면 그쪽으로 보낸다
+const MOVED_SECTIONS = { "#recruit": "recruit.html", "#notice": "notice.html" };
+if (MOVED_SECTIONS[location.hash]) location.replace(pageUrl(MOVED_SECTIONS[location.hash]));
+
 /* ── 텍스트 바인딩 ── */
 function renderBindings() {
   const values = {
@@ -129,84 +133,13 @@ function renderMembers() {
   });
 }
 
-/* ── 모집 ── */
-function renderRecruit() {
-  const recruit = DATA.recruit;
-  const status = recruitStatus(DATA);
-  const applyUrl = safeUrl(recruit.applyUrl);
-
-  ["#recruit-badge", "#cta-badge"].forEach((sel) => {
-    const badge = $(sel);
-    badge.textContent = status.label;
-    badge.dataset.status = recruit.status;
-  });
-
-  $("#recruit-title").textContent = recruit.title;
-  $("#recruit-period").textContent = recruit.period;
-  $("#cta-title").textContent = recruit.title;
-  $("#cta-period").textContent = recruit.period;
-
-  const btn = $("#apply-btn");
-  if (recruit.status === "open" && applyUrl) {
-    btn.href = applyUrl;
-    btn.innerHTML = `${esc(status.button)} ${icon("arrow-up-right")}`;
-  } else {
-    btn.textContent = status.button;
-    btn.removeAttribute("href");
-    btn.setAttribute("aria-disabled", "true");
-  }
-
-  $("#recruit-target").innerHTML = (recruit.target ?? [])
-    .map((t) => `<li>${icon("check-circle")}<span>${esc(t)}</span></li>`)
-    .join("");
-  $("#recruit-steps").innerHTML = (recruit.steps ?? [])
-    .map((s, i) => `
-      <li class="step">
-        <span class="step-num">${pad2(i + 1)}</span>
-        <p class="step-title">${esc(s.title)}</p>
-        <p class="step-date">${esc(s.date)}</p>
-      </li>`)
-    .join("");
-
-  $("#faq-list").innerHTML = (recruit.faq ?? [])
-    .map((f) => `
-      <details class="faq-item">
-        <summary><span>${esc(f.q)}</span>${icon("caret-down")}</summary>
-        <p>${multiline(f.a)}</p>
-      </details>`)
-    .join("");
-}
-
-/* ── 공지 ── */
-const NOTICE_PAGE = 5;
-
-function renderNotices() {
-  const list = $("#notice-list");
-  const moreBtn = $("#notice-more");
-  const sorted = [...(DATA.notices ?? [])].sort((a, b) => String(b.date).localeCompare(String(a.date)));
-  let shown = NOTICE_PAGE;
-
-  const draw = () => {
-    list.innerHTML = listHtml(sorted.slice(0, shown), (n) => `
-      <li>
-        <details class="notice">
-          <summary>
-            <span class="notice-cat">${esc(n.category)}</span>
-            <span class="notice-title">${esc(n.title)}</span>
-            <time datetime="${esc(n.date)}">${esc(String(n.date).replace(/-/g, "."))}</time>
-            ${icon("caret-down")}
-          </summary>
-          <div class="notice-body"><p>${multiline(n.body)}</p></div>
-        </details>
-      </li>`);
-    moreBtn.hidden = shown >= sorted.length;
-  };
-
-  moreBtn.addEventListener("click", () => {
-    shown += NOTICE_PAGE;
-    draw();
-  });
-  draw();
+/* ── 마지막 지원 안내 카드 (자세한 모집 내용은 recruit.html) ── */
+function renderCtaCard() {
+  const badge = $("#cta-badge");
+  badge.textContent = recruitStatus(DATA).label;
+  badge.dataset.status = DATA.recruit.status;
+  $("#cta-title").textContent = DATA.recruit.title;
+  $("#cta-period").textContent = DATA.recruit.period;
 }
 
 function renderHeroNote() {
@@ -271,8 +204,7 @@ function renderHome(data) {
   renderActivities();
   renderProjects();
   renderMembers();
-  renderRecruit();
-  renderNotices();
+  renderCtaCard();
   renderVideos();
 }
 
