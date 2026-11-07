@@ -34,8 +34,9 @@
   --glow: rgba(106, 61, 240, 0.08); /* 마우스를 따라다니는 빛 */
   --iris: #8052ff; /* 첫 화면 버튼 · 지구본 (참고: Dala) */
   --iris-bright: #9b82ff;
-  --amber: #ffb829;
-  --lavender: #fde9ff; /* 큰 숫자 (참고: Auros) */
+  --stage-bg: #f6f5fb; /* 첫 화면 · 숫자 띠 무대: 라이트는 옅은 종이, 다크는 검정 */
+  --amber-text: #b45309; /* 무대 위 작은 글씨의 호박색 */
+  --stat-number: #0e1e35; /* 숫자 띠의 큰 숫자 (참고: Auros) */
 
   /* 글꼴: 영문은 Geist, 한글은 Geist에 없어서 Pretendard가 대신 그린다 */
   --font: "Geist", "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
@@ -120,6 +121,9 @@
     --strong: #ededed;
     --on-strong: #000000;
     --logo: #ffffff;
+    --stage-bg: #000000;
+    --amber-text: #ffb829;
+    --stat-number: #fde9ff;
     --up: #ff6369;
     --success: #4cc38a;
     --success-soft: rgba(76, 195, 138, 0.14);
@@ -150,6 +154,9 @@
   --strong: #ededed;
   --on-strong: #000000;
   --logo: #ffffff;
+  --stage-bg: #000000;
+  --amber-text: #ffb829;
+  --stat-number: #fde9ff;
   --up: #ff6369;
   --success: #4cc38a;
   --success-soft: rgba(76, 195, 138, 0.14);
@@ -591,28 +598,12 @@ img {
 }
 
 /* ───────────────────────── 무대 (첫 화면 · 숫자 띠) ─────────────────────────
- * 화면 모드와 상관없이 늘 검은 무대 위에 있다. 무대 안에서는 색 변수를 어두운 값으로 바꿔 쓴다.
- * (참고: Dala의 검은 무대와 입자 도형, Auros의 큰 숫자와 대문자 라벨)
+ * 화면 모드를 따른다. 라이트는 옅은 종이 위 남색 잉크로 쓴 수식, 다크는 검은 무대 위 빛나는 입자.
+ * 지구본 색은 js/hero.js가 화면 모드를 보고 고른다.
+ * (참고: Dala의 입자 도형, Auros의 큰 숫자와 대문자 라벨)
  */
 .stage {
-  color-scheme: dark;
-  --bg: #000000;
-  --bg-soft: #0b0b10;
-  --surface: #111116;
-  --text: #f5f5f7;
-  --text-soft: #a7a7b3;
-  --text-faint: #7d7d8a;
-  --line: #24242c;
-  --line-strong: #34343e;
-  --accent: var(--iris-bright);
-  --accent-soft: rgba(155, 130, 255, 0.16);
-  --on-accent: #000000;
-  --strong: #f5f5f7;
-  --on-strong: #000000;
-  --logo: #ffffff;
-  --hero-from: #ffffff;
-  --hero-to: #a9a9b8;
-  background: var(--bg);
+  background: var(--stage-bg);
   color: var(--text);
 }
 
@@ -657,11 +648,11 @@ body[data-page="home"] #main {
   font: var(--caption-3);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--amber);
+  color: var(--amber-text);
 }
 
 .hero-stage .eyebrow::before {
-  background: var(--amber);
+  background: var(--amber-text);
 }
 
 .hero-stage .hero-title {
@@ -714,7 +705,7 @@ body[data-page="home"] #main {
 }
 
 .hero-chart-label span:last-child {
-  color: var(--amber);
+  color: var(--amber-text);
 }
 
 .hero-hint {
@@ -757,7 +748,7 @@ body[data-page="home"] #main {
   margin-top: var(--s-100);
   font: 500 48px/48px var(--font);
   letter-spacing: -0.04em;
-  color: var(--lavender);
+  color: var(--stat-number);
 }
 
 /* 돋보기 복제본에서는 붙어 있는 무대를 JS가 직접 옮긴다 */
@@ -2706,6 +2697,12 @@ a.post-row:hover {
 
 .magnifier.is-visible {
   opacity: 1;
+}
+
+/* 렌즈가 커서 노릇을 하므로 렌즈가 떠 있는 동안 마우스 커서를 숨긴다 */
+.lens-on,
+.lens-on * {
+  cursor: none !important;
 }
 
 /* 렌즈 안: 확대된 페이지 + 볼록 왜곡과 색수차 필터 */

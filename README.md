@@ -26,7 +26,7 @@ js/gallery-config.js  갤러리가 쓰는 Supabase 주소와 공개 키
 js/gallery-mock.js    내 컴퓨터에서 갤러리를 시험해 보는 가짜 서버 (gallery.html?mock)
 js/hero.js            첫 화면 지구본 (수식 · 코드 입자가 수익률 그래프로 바뀜)
 js/icons.js           직접 그린 아이콘과 동아리 로고
-js/effects.js         마우스 효과 (돋보기, 카드 빛, 자석 버튼)
+js/effects.js         마우스 효과 (돋보기는 홈에서만, 카드 빛, 자석 버튼)
 js/theme.js           화면 모드(시스템 · 라이트 · 다크) 전환
 js/admin*.js          관리 페이지 동작 · 메뉴 정의 · GitHub 저장
 research/             리서치 본문(.md), PDF, 그림(images/)

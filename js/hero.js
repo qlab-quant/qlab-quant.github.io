@@ -23,8 +23,28 @@
     "def backtest():", "cov = X.T @ X", "returns.std()", "if signal > 0:", "for t in range(T):", "e^(−rT)",
     "√252", "P(X > x)", "λ = 0.94",
   ];
-  // 흰색이 바탕이고 보라 · 호박색 · 청록 · 분홍이 반짝인다
-  const PALETTE = ["#ffffff", "#ffffff", "#e9e4ff", "#a58fff", "#8052ff", "#ffb829", "#ffd27a", "#2fd6b5", "#fde9ff", "#ff9ad5"];
+  // 화면 모드별 색. 다크는 검은 무대 위에서 빛이 겹쳐 밝아지고(lighter),
+  // 라이트는 종이 위에 남색 잉크로 쓴 듯 겹쳐 그린다(source-over). 두 팔레트는 같은 자리끼리 짝이다.
+  const THEMES = {
+    dark: {
+      palette: ["#ffffff", "#ffffff", "#e9e4ff", "#a58fff", "#8052ff", "#ffb829", "#ffd27a", "#2fd6b5", "#fde9ff", "#ff9ad5"],
+      blend: "lighter",
+      glow: ["rgba(128, 82, 255, 0.24)", "rgba(47, 214, 181, 0.07)", "rgba(128, 82, 255, 0)"],
+      line: ["#8052ff", "#ff9ad5", "#ffb829"],
+      dot: "255, 184, 41",
+      alpha: 1,
+    },
+    light: {
+      palette: ["#0e1e35", "#0e1e35", "#33405c", "#7c62f0", "#6a3df0", "#c27803", "#d4900f", "#0e9f80", "#3d2a8c", "#d6409f"],
+      blend: "source-over",
+      glow: ["rgba(106, 61, 240, 0.12)", "rgba(14, 159, 128, 0.05)", "rgba(106, 61, 240, 0)"],
+      line: ["#6a3df0", "#d6409f", "#c27803"],
+      dot: "194, 120, 3",
+      alpha: 0.92,
+    },
+  };
+  const currentTheme = () => (getComputedStyle(document.documentElement).colorScheme.includes("dark") ? THEMES.dark : THEMES.light);
+  let theme = currentTheme();
   const CURVE_POINTS = 180;
 
   let seed = 7;
@@ -78,7 +98,7 @@
       const ring = Math.sqrt(1 - y * y);
       const p = {
         text: long ? pick(PHRASES) : pick(GLYPHS),
-        color: pick(PALETTE),
+        tone: Math.floor(rand() * THEMES.dark.palette.length), // 팔레트 자리 번호
         long,
         ux: Math.cos(k * golden) * ring,
         uy: y,
@@ -176,9 +196,9 @@
   function drawGlow(x, y, r, alpha) {
     if (alpha <= 0) return;
     const glow = ctx.createRadialGradient(x, y, 0, x, y, r * 1.7);
-    glow.addColorStop(0, "rgba(128, 82, 255, 0.24)");
-    glow.addColorStop(0.45, "rgba(47, 214, 181, 0.07)");
-    glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+    glow.addColorStop(0, theme.glow[0]);
+    glow.addColorStop(0.45, theme.glow[1]);
+    glow.addColorStop(1, theme.glow[2]);
     ctx.globalAlpha = alpha;
     ctx.fillStyle = glow;
     ctx.fillRect(x - r * 1.7, y - r * 1.7, r * 3.4, r * 3.4);
@@ -188,9 +208,9 @@
   function drawLine(amount) {
     const n = Math.max(2, Math.floor(amount * curvePts.length));
     const line = ctx.createLinearGradient(region.x0, 0, region.x1, 0);
-    line.addColorStop(0, "#8052ff");
-    line.addColorStop(0.6, "#ff9ad5");
-    line.addColorStop(1, "#ffb829");
+    line.addColorStop(0, theme.line[0]);
+    line.addColorStop(0.6, theme.line[1]);
+    line.addColorStop(1, theme.line[2]);
     ctx.globalAlpha = 0.9 * amount;
     ctx.strokeStyle = line;
     ctx.lineWidth = 2;
@@ -200,8 +220,8 @@
     ctx.stroke();
     const [ex, ey] = curvePts[n - 1];
     const dot = ctx.createRadialGradient(ex, ey, 0, ex, ey, 18);
-    dot.addColorStop(0, "rgba(255, 184, 41, 0.9)");
-    dot.addColorStop(1, "rgba(255, 184, 41, 0)");
+    dot.addColorStop(0, `rgba(${theme.dot}, 0.9)`);
+    dot.addColorStop(1, `rgba(${theme.dot}, 0)`);
     ctx.fillStyle = dot;
     ctx.fillRect(ex - 18, ey - 18, 36, 36);
   }
@@ -229,7 +249,7 @@
     ctx.globalCompositeOperation = "source-over";
     ctx.clearRect(0, 0, W, H);
     drawGlow(gx0, gy0, globe.r, 1 - m);
-    ctx.globalCompositeOperation = "lighter";
+    ctx.globalCompositeOperation = theme.blend;
 
     for (const p of particles) {
       // 1) 흩어진 자리 (천천히 떠다닌다)
@@ -260,10 +280,10 @@
         a = lerp(a, p.ca, k);
       }
 
-      const img = sprite(p.text, p.color, p.long ? 11 : 13);
+      const img = sprite(p.text, theme.palette[p.tone], p.long ? 11 : 13);
       const w = (img.width / dpr) * s;
       const h = (img.height / dpr) * s;
-      ctx.globalAlpha = a;
+      ctx.globalAlpha = a * theme.alpha;
       ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
     }
 
@@ -290,6 +310,13 @@
     running = !document.hidden && hero.getBoundingClientRect().bottom > 0;
     if (running) play();
   });
+  // 화면 모드를 바꾸면(버튼 또는 시스템 설정) 바로 색을 바꾼다
+  const retheme = () => {
+    theme = currentTheme();
+    play();
+  };
+  new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", retheme);
   new ResizeObserver(() => {
     layout();
     play();

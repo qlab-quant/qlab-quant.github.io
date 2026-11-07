@@ -24,8 +24,9 @@
     );
   }
 
-  /* ── 돋보기: 커서 자리의 페이지를 확대해서 보여 준다 ──
+  /* ── 돋보기: 커서 자리의 페이지를 확대해서 보여 준다 (지구본이 있는 홈에서만) ──
    * 페이지를 한 벌 복제해 렌즈 안에 크게 놓고, 커서 위치에 맞춰 옮긴다.
+   * 렌즈가 커서 노릇을 하므로 렌즈가 떠 있는 동안 마우스 커서는 숨긴다.
    * 렌즈 광학 효과(가장자리 볼록 왜곡 · 색수차)는 SVG 필터, 유리 반사는 CSS로 그린다. */
   const LENS = 150; // 렌즈 지름(px)
   const ZOOM = 1.8; // 확대 배율
@@ -80,7 +81,7 @@
   }
 
   function setupMagnifier() {
-    if (!animated) return;
+    if (!animated || document.body.dataset.page !== "home") return;
     const pageSources = [...document.querySelectorAll("main, .site-footer")];
     const fixedSources = [...document.querySelectorAll(".site-nav")];
     if (!pageSources.length) return;
@@ -160,7 +161,10 @@
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(render);
     };
-    const show = (on) => lens.classList.toggle("is-visible", on);
+    const show = (on) => {
+      lens.classList.toggle("is-visible", on);
+      document.documentElement.classList.toggle("lens-on", on);
+    };
 
     // 페이지 내용이 바뀌면 잠시 뒤 다시 복제한다
     // (마우스 효과용 style 변경과, 렌즈 자신 안에서 생긴 변화는 무시)
