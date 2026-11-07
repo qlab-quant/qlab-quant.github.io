@@ -149,4 +149,10 @@ python3 -m http.server 8000
 
 ## 배포 (GitHub Pages)
 
-`main` 브랜치에 push 하거나 관리 페이지에서 저장하면 1~2분 뒤 https://qlab-quant.github.io/ 에 자동으로 반영됩니다. 배포 설정은 저장소 **Settings → Pages**에서 볼 수 있습니다(Source: `main` 브랜치 `/ (root)`).
+`main` 브랜치에 push 하거나 관리 페이지에서 저장하면 1~2분 뒤 https://qlab-quant.github.io/ 에 자동으로 반영됩니다.
+
+`css/`나 `js/` 파일을 직접 고쳤다면 push 하기 전에 아래 명령을 실행하세요. HTML이 불러오는 CSS · JS 주소에 새 버전이 붙어서, 방문자 브라우저에 남아 있던 예전 파일과 섞여 화면이 깨지는 일을 막아 줍니다. (관리 페이지에서 내용만 저장할 때는 필요 없습니다.)
+
+```bash
+python3 scripts/bump_version.py
+``` 배포 설정은 저장소 **Settings → Pages**에서 볼 수 있습니다(Source: `main` 브랜치 `/ (root)`).
