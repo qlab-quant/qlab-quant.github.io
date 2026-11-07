@@ -16,10 +16,11 @@
   --placeholder: #a1a1aa;
   --line: #e4e4e7;
   --line-strong: #d4d4d8;
-  --accent: #2458e6;
-  --accent-soft: #edf2fe;
+  --accent: #6a3df0;
+  --accent-soft: #f0ebff;
   --on-accent: #ffffff;
-  --strong: #0a0a0a; /* 진한 버튼 · 로고 · 알림 배경 */
+  --strong: #0a0a0a; /* 진한 버튼 · 알림 배경 */
+  --logo: #0e1e35; /* 동아리 로고 남색 */
   --on-strong: #ffffff;
   --up: #e5484d;
   --success: #138a4b;
@@ -30,7 +31,11 @@
   --shadow: rgba(0, 0, 0, 0.08);
   --hero-from: #000000;
   --hero-to: #666666;
-  --glow: rgba(36, 88, 230, 0.08); /* 마우스를 따라다니는 빛 */
+  --glow: rgba(106, 61, 240, 0.08); /* 마우스를 따라다니는 빛 */
+  --iris: #8052ff; /* 첫 화면 버튼 · 지구본 (참고: Dala) */
+  --iris-bright: #9b82ff;
+  --amber: #ffb829;
+  --lavender: #fde9ff; /* 큰 숫자 (참고: Auros) */
 
   /* 글꼴: 영문은 Geist, 한글은 Geist에 없어서 Pretendard가 대신 그린다 */
   --font: "Geist", "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui,
@@ -109,11 +114,12 @@
     --placeholder: #5e5e5e;
     --line: #272727;
     --line-strong: #313131;
-    --accent: #7ea6ff;
-    --accent-soft: rgba(126, 166, 255, 0.14);
+    --accent: #9b82ff;
+    --accent-soft: rgba(155, 130, 255, 0.16);
     --on-accent: #000000;
     --strong: #ededed;
     --on-strong: #000000;
+    --logo: #ffffff;
     --up: #ff6369;
     --success: #4cc38a;
     --success-soft: rgba(76, 195, 138, 0.14);
@@ -123,7 +129,7 @@
     --shadow: rgba(0, 0, 0, 0.6);
     --hero-from: #ffffff;
     --hero-to: #9b9b9b;
-    --glow: rgba(126, 166, 255, 0.12);
+    --glow: rgba(155, 130, 255, 0.14);
   }
 }
 
@@ -138,11 +144,12 @@
   --placeholder: #5e5e5e;
   --line: #272727;
   --line-strong: #313131;
-  --accent: #7ea6ff;
-  --accent-soft: rgba(126, 166, 255, 0.14);
+  --accent: #9b82ff;
+  --accent-soft: rgba(155, 130, 255, 0.16);
   --on-accent: #000000;
   --strong: #ededed;
   --on-strong: #000000;
+  --logo: #ffffff;
   --up: #ff6369;
   --success: #4cc38a;
   --success-soft: rgba(76, 195, 138, 0.14);
@@ -152,7 +159,7 @@
   --shadow: rgba(0, 0, 0, 0.6);
   --hero-from: #ffffff;
   --hero-to: #9b9b9b;
-  --glow: rgba(126, 166, 255, 0.12);
+  --glow: rgba(155, 130, 255, 0.14);
 }
 
 /* ───────────────────────── 기본 ───────────────────────── */
@@ -214,9 +221,17 @@ img {
   border-radius: var(--r-md);
 }
 
-.ph {
+/* 아이콘 (js/icons.js가 그리는 SVG): 글자 크기를 따라 커지고, 선 색은 글자 색을 따른다 */
+.icon {
+  width: 1em;
+  height: 1em;
   flex: none;
-  line-height: 1;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  vertical-align: -0.125em;
 }
 
 .container {
@@ -267,16 +282,16 @@ img {
   transform: scale(0.98);
 }
 
-.btn .ph {
+.btn .icon {
   font-size: 16px;
   transition: transform var(--dur-fast) var(--ease);
 }
 
-.btn:hover .ph-arrow-right {
+.btn:hover .icon-arrow-right {
   transform: translateX(var(--s-25));
 }
 
-.btn:hover .ph-arrow-up-right {
+.btn:hover .icon-arrow-up-right {
   transform: translate(var(--s-25), calc(-1 * var(--s-25)));
 }
 
@@ -316,22 +331,19 @@ img {
 .logo {
   display: flex;
   align-items: center;
-  gap: var(--s-75);
   font: var(--heading-6);
-  letter-spacing: -0.02em;
 }
 
 .logo-mark {
-  display: grid;
-  place-items: center;
-  width: 32px;
+  display: block;
   height: 32px;
-  border-radius: var(--r-full);
-  background: var(--strong);
-  color: var(--on-strong);
-  font: var(--body-4);
-  font-family: var(--mono);
-  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
+  color: var(--logo);
+}
+
+.logo-svg {
+  display: block;
+  width: auto;
+  height: 100%;
 }
 
 .theme-btn {
@@ -505,17 +517,6 @@ img {
   padding-top: var(--s-800);
 }
 
-.hero {
-  padding: var(--s-900) 0 var(--s-700);
-}
-
-.hero-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
 .eyebrow {
   display: inline-flex;
   align-items: center;
@@ -568,22 +569,6 @@ img {
   color: var(--text-faint);
 }
 
-/* 히어로 그림: 숫자 + 차트가 들어간 대시보드 카드 */
-.hero-visual {
-  margin-top: var(--s-700);
-  padding: var(--s-75);
-  border: 1px solid var(--line);
-  border-radius: var(--r-3xl);
-  background: var(--bg-soft);
-}
-
-.chart-card {
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--r-2xl);
-  background: var(--surface);
-}
-
 .stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -591,10 +576,6 @@ img {
 
 .stat {
   padding: var(--s-300);
-}
-
-.stat + .stat {
-  box-shadow: inset 1px 0 0 var(--line);
 }
 
 .stat dt {
@@ -609,84 +590,228 @@ img {
   letter-spacing: -0.03em;
 }
 
-.chart-wrap {
-  padding: var(--s-300);
+/* ───────────────────────── 무대 (첫 화면 · 숫자 띠) ─────────────────────────
+ * 화면 모드와 상관없이 늘 검은 무대 위에 있다. 무대 안에서는 색 변수를 어두운 값으로 바꿔 쓴다.
+ * (참고: Dala의 검은 무대와 입자 도형, Auros의 큰 숫자와 대문자 라벨)
+ */
+.stage {
+  color-scheme: dark;
+  --bg: #000000;
+  --bg-soft: #0b0b10;
+  --surface: #111116;
+  --text: #f5f5f7;
+  --text-soft: #a7a7b3;
+  --text-faint: #7d7d8a;
+  --line: #24242c;
+  --line-strong: #34343e;
+  --accent: var(--iris-bright);
+  --accent-soft: rgba(155, 130, 255, 0.16);
+  --on-accent: #000000;
+  --strong: #f5f5f7;
+  --on-strong: #000000;
+  --logo: #ffffff;
+  --hero-from: #ffffff;
+  --hero-to: #a9a9b8;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body[data-page="home"] #main {
+  padding-top: 0;
+}
+
+/* 스크롤하는 동안 무대가 화면에 붙어 있고, 그 사이 지구본이 그래프로 바뀐다 */
+.hero {
+  position: relative;
+  height: 260vh;
+}
+
+.hero-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.hero-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  height: 100%;
+}
+
+.hero-stage .eyebrow {
+  padding: 0;
+  border: 0;
+  font: var(--caption-3);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--amber);
+}
+
+.hero-stage .eyebrow::before {
+  background: var(--amber);
+}
+
+.hero-stage .hero-title {
+  max-width: 640px;
+  margin-top: var(--s-300);
+  font: 500 72px/72px var(--font);
+  letter-spacing: -0.045em;
+}
+
+.hero-stage .hero-sub {
+  max-width: 460px;
+  color: var(--text-soft);
+}
+
+.hero-stage .hero-actions {
+  align-items: flex-start;
+}
+
+.hero-cta {
+  padding: var(--s-100) var(--s-300);
+  border-radius: var(--r-full);
+  background: var(--iris);
+  color: #ffffff;
+}
+
+.hero-cta:hover {
+  background: var(--iris-bright);
+  color: #ffffff;
+}
+
+.hero-chart-label,
+.hero-hint {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--s-200);
+  font: var(--caption-4);
+  font-family: var(--mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hero-chart-label {
+  top: 0;
+  left: 0;
+}
+
+.hero-chart-label span:last-child {
+  color: var(--amber);
+}
+
+.hero-hint {
+  left: 50%;
+  bottom: var(--s-400);
+  gap: var(--s-75);
+  letter-spacing: 0.04em;
+  text-transform: none;
+  transform: translateX(-50%);
+}
+
+.hero-hint .icon {
+  transform: rotate(90deg);
+}
+
+/* 숫자 띠 */
+.stats-band {
+  padding: var(--s-800) 0;
   box-shadow: inset 0 1px 0 var(--line);
 }
 
-.chart-head {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: var(--s-200);
-  font: var(--caption-5);
-  font-family: var(--mono);
+.stats-band .stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-300);
+}
+
+.stats-band .stat {
+  padding: 0;
+}
+
+.stats-band .stat dt {
+  font: var(--caption-3);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--text-faint);
 }
 
-.chart-change {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--s-50);
-  color: var(--up);
+.stats-band .stat dd {
+  margin-top: var(--s-100);
+  font: 500 48px/48px var(--font);
+  letter-spacing: -0.04em;
+  color: var(--lavender);
 }
 
-#hero-chart {
-  display: block;
-  width: 100%;
-  height: 240px;
-  overflow: visible;
+/* 돋보기 복제본에서는 붙어 있는 무대를 JS가 직접 옮긴다 */
+.magnifier-page [data-lens-sticky] {
+  position: relative !important;
 }
 
-.chart-grid line {
-  stroke: var(--line);
-  stroke-dasharray: 2 6;
-}
-
-.chart-area {
-  fill: var(--accent);
-  opacity: 0.08;
-}
-
-.chart-line {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 2;
-  stroke-linejoin: round;
-  stroke-linecap: round;
-}
-
-/* 선을 그리는 대신, 가림막을 왼쪽에서 오른쪽으로 걷어 낸다 (transform만 움직임) */
-.chart-reveal {
-  transform-box: fill-box;
-  transform-origin: left;
-  transform: scaleX(0);
-  animation: chart-reveal 1800ms var(--ease) 200ms forwards;
-}
-
-.chart-dot {
-  fill: var(--accent);
-  stroke: var(--surface);
-  stroke-width: 3;
-  opacity: 0;
-  animation: fade-in var(--dur-fast) var(--ease) 1700ms forwards;
-}
-
-.static .chart-reveal,
-.static .chart-dot {
-  animation: none;
-  transform: none;
-  opacity: 1;
-}
-
-@keyframes chart-reveal {
-  to {
-    transform: scaleX(1);
+@media (max-width: 960px) {
+  .hero-stage .hero-title {
+    font: 500 60px/60px var(--font);
+    letter-spacing: -0.045em;
   }
 }
 
-@keyframes fade-in {
-  to {
-    opacity: 1;
+@media (max-width: 720px) {
+  .hero {
+    height: 220vh;
+  }
+
+  .hero-stage .hero-inner {
+    justify-content: flex-start;
+    padding-top: calc(var(--s-900) + var(--s-200));
+  }
+
+  .hero-stage .hero-title {
+    font: 500 36px/40px var(--font);
+    letter-spacing: -0.04em;
+  }
+
+  .hero-stage .hero-sub {
+    font: var(--body-3);
+  }
+
+  .stats-band {
+    padding: var(--s-600) 0;
+  }
+
+  .stats-band .stats {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: var(--s-400);
+  }
+
+  .stats-band .stat dd {
+    font: 500 30px/36px var(--font);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    height: auto;
+  }
+
+  .hero-stage {
+    position: relative;
   }
 }
 
@@ -788,15 +913,10 @@ img {
 }
 
 .value-icon {
-  display: grid;
   flex: none;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--r-xl);
-  background: var(--accent-soft);
   color: var(--accent);
-  font-size: 20px;
+  font-size: 32px;
+  line-height: 0;
 }
 
 .value h3 {
@@ -895,7 +1015,7 @@ img {
   color: var(--accent);
 }
 
-.project h3 .ph {
+.project h3 .icon {
   font-size: 18px;
   color: var(--text-faint);
 }
@@ -1057,7 +1177,7 @@ img {
   color: var(--text-soft);
 }
 
-.check-list .ph {
+.check-list .icon {
   margin-top: var(--s-25);
   font-size: 20px;
   color: var(--accent);
@@ -1114,13 +1234,13 @@ details summary::-webkit-details-marker {
   display: none;
 }
 
-details summary .ph-caret-down {
+details summary .icon-caret-down {
   font-size: 18px;
   color: var(--text-faint);
   transition: transform var(--dur) var(--ease);
 }
 
-details[open] summary .ph-caret-down {
+details[open] summary .icon-caret-down {
   transform: rotate(180deg);
 }
 
@@ -1261,6 +1381,13 @@ details[open] > :not(summary) {
   gap: var(--s-500);
 }
 
+.footer-logo {
+  display: block;
+  height: 112px;
+  margin-bottom: var(--s-300);
+  color: var(--logo);
+}
+
 .footer-name {
   font: var(--title-2);
 }
@@ -1289,7 +1416,7 @@ details[open] > :not(summary) {
   color: var(--text);
 }
 
-.contact-list .ph {
+.contact-list .icon {
   font-size: 18px;
   color: var(--text-faint);
 }
@@ -1684,7 +1811,7 @@ textarea.input {
   white-space: nowrap;
 }
 
-.repo-name .ph-arrow-up-right {
+.repo-name .icon-arrow-up-right {
   margin-left: auto;
   color: var(--text-faint);
 }
@@ -2009,7 +2136,7 @@ a.post-row:hover {
   white-space: nowrap;
 }
 
-.post-title .ph {
+.post-title .icon {
   color: var(--text-faint);
 }
 
@@ -2332,7 +2459,7 @@ a.post-row:hover {
   transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
 }
 
-.picker-add .ph {
+.picker-add .icon {
   font-size: 24px;
 }
 
@@ -2553,32 +2680,6 @@ a.post-row:hover {
   }
 }
 
-/* ───────────────────────── 인터랙션 (마우스를 따라 움직이는 효과, js/effects.js) ─────────────────────────
- * 사용자가 화려한 효과를 원해 디자인 규칙 중 '배경 그라디언트 금지'만 예외로 둔다.
- * 마우스 주변에만 잠깐 나타나는 빛이라 평소 화면은 그대로 단색이다.
- */
-
-/* 히어로 뒤 점 격자: 마우스 근처 점이 밝아지며 밀려난다 */
-.hero {
-  position: relative;
-}
-
-.hero > .container {
-  position: relative;
-  z-index: 1;
-}
-
-.hero-grid {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 100%);
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 35%, #000 30%, transparent 100%);
-}
-
 /* 돋보기: 커서 자리를 확대해 보여 주는 렌즈 (js/effects.js) */
 .magnifier {
   --lens-rim: #2a2a2a;
@@ -2630,14 +2731,6 @@ a.post-row:hover {
 .magnifier-fixed * {
   animation: none !important;
   transition: none !important;
-}
-
-.magnifier .chart-reveal {
-  transform: none;
-}
-
-.magnifier .chart-dot {
-  opacity: 1;
 }
 
 /* 유리 테두리 · 반사광 · 가장자리 그늘 (왜곡 필터 밖에 따로 그린다) */
@@ -2724,63 +2817,6 @@ a.post-row:hover {
 .spotlight:hover::before,
 .spotlight:hover::after {
   opacity: 1;
-}
-
-/* 대시보드 카드: 마우스 쪽으로 살짝 기운다 */
-.hero-visual {
-  transform: perspective(1400px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
-  transition: transform var(--dur) var(--ease);
-}
-
-/* 차트 십자선: 마우스를 올리면 그 지점의 값이 보인다 */
-.chart-wrap {
-  position: relative;
-}
-
-#hero-chart {
-  cursor: crosshair;
-  touch-action: pan-y;
-}
-
-.chart-cross {
-  stroke: var(--text-faint);
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
-}
-
-.chart-hover-dot {
-  fill: var(--accent);
-  stroke: var(--surface);
-  stroke-width: 3;
-}
-
-.chart-cross,
-.chart-hover-dot,
-.chart-tip {
-  opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease);
-}
-
-.chart-hover .chart-cross,
-.chart-hover .chart-hover-dot,
-.chart-hover .chart-tip {
-  opacity: 1;
-}
-
-.chart-tip {
-  position: absolute;
-  top: 0;
-  left: 0;
-  padding: var(--s-50) var(--s-75);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  color: var(--text);
-  font: var(--caption-4);
-  font-family: var(--mono);
-  white-space: nowrap;
-  pointer-events: none;
-  box-shadow: 0 var(--s-50) var(--s-200) var(--shadow);
 }
 
 /* 자석 버튼: 마우스를 올리면 버튼이 마우스 쪽으로 끌려온다 */
@@ -2872,10 +2908,6 @@ a.post-row:hover {
     padding-top: var(--s-700);
   }
 
-  .hero {
-    padding: var(--s-700) 0 var(--s-600);
-  }
-
   .hero-title {
     font: var(--heading-4);
     letter-spacing: -0.04em;
@@ -2883,10 +2915,6 @@ a.post-row:hover {
 
   .hero-sub {
     font: var(--body-3);
-  }
-
-  .hero-visual {
-    margin-top: var(--s-600);
   }
 
   .stats {
@@ -2897,33 +2925,9 @@ a.post-row:hover {
     padding: var(--s-200);
   }
 
-  .stat + .stat {
-    box-shadow: none;
-  }
-
-  .stat:nth-child(even) {
-    box-shadow: inset 1px 0 0 var(--line);
-  }
-
-  .stat:nth-child(n + 3) {
-    box-shadow: inset 0 1px 0 var(--line);
-  }
-
-  .stat:nth-child(4) {
-    box-shadow: inset 1px 1px 0 var(--line);
-  }
-
   .stat dd {
     font: var(--heading-5);
     font-family: var(--mono);
-  }
-
-  .chart-wrap {
-    padding: var(--s-200);
-  }
-
-  #hero-chart {
-    height: 160px;
   }
 
   .tagline-section,
@@ -2992,7 +2996,7 @@ a.post-row:hover {
     grid-column: 1;
   }
 
-  .notice summary .ph-caret-down {
+  .notice summary .icon-caret-down {
     grid-column: 2;
     grid-row: 1 / span 3;
   }
@@ -3025,13 +3029,6 @@ a.post-row:hover {
     scroll-behavior: auto;
   }
 
-  .chart-reveal,
-  .chart-dot {
-    animation: none;
-    transform: none;
-    opacity: 1;
-  }
-
   /* 움직임 대신 투명도만 바뀐다 */
   .js [data-reveal],
   .mobile-menu a {
@@ -3050,7 +3047,6 @@ a.post-row:hover {
     display: none;
   }
 
-  .hero-visual,
   .btn[data-magnetic] {
     transform: none;
   }

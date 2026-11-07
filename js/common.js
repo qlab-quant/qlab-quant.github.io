@@ -19,7 +19,7 @@ function esc(value = "") {
 const multiline = (value) => esc(value).replace(/\n/g, "<br>");
 
 const pad2 = (n) => String(n).padStart(2, "0");
-const icon = (name) => `<i class="ph ph-${name}" aria-hidden="true"></i>`;
+const icon = (name) => window.qlabIcon?.(name) ?? ""; // js/icons.js
 
 // javascript: 처럼 위험한 주소는 링크로 쓰지 않는다
 function safeUrl(url = "") {
@@ -113,7 +113,7 @@ function renderShell() {
   $("#site-nav").innerHTML = `
     <div class="nav-inner">
       <a href="${PAGE === "home" ? "#top" : pageUrl("./")}" class="logo" aria-label="Q-Lab 처음으로">
-        <span class="logo-mark">Q</span><span class="logo-text">Lab</span>
+        <span class="logo-mark">${window.qlabLogo?.() ?? "Q-Lab"}</span>
       </a>
       <nav class="nav-links" id="nav" aria-label="주요 메뉴">
         ${NAV_ITEMS.map((item) => `<a href="${navHref(item)}"${current(item)}>${item.label}</a>`).join("")}
@@ -134,6 +134,7 @@ function renderShell() {
   $("#site-footer").innerHTML = `
     <div class="container footer-inner">
       <div>
+        <span class="footer-logo">${window.qlabLogo?.("stack") ?? ""}</span>
         <p class="footer-name" id="footer-name"></p>
         <p class="footer-sub" id="footer-sub"></p>
       </div>

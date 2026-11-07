@@ -1,4 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="16" fill="#111418"/>
-  <text x="32" y="44" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="36" font-weight="600" fill="#ffffff">Q</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><title>Q LAB</title><rect width="64" height="64" rx="14" fill="#0e1e35"/><g transform="translate(32 32) scale(0.07339) translate(-608.4 -322.9)"><defs><mask id="fav-cut" maskUnits="userSpaceOnUse" x="0" y="0" width="1125" height="700"><rect width="1125" height="700" fill="#fff"/><path d="M618.1 361.9L845 135" stroke="#000" stroke-width="104"/></mask></defs><g fill="none" stroke="#ffffff"><circle cx="569.3" cy="322.9" r="227" stroke-width="62" mask="url(#fav-cut)"/><path d="M569.3 21.4V171.4M569.3 474.4V624.4M267.8 322.9H417.8M732.8 322.9H870.8" stroke-width="21"/><path d="M381.8 450.8L544.4 288.2L618.1 361.9L845 135" stroke-width="60" stroke-miterlimit="4"/><path d="M668.2 422.2L814 568" stroke-width="58"/></g><path d="M949.1 30.9L784.9 74.9L905.1 195.1Z" fill="#ffffff"/></g></svg>

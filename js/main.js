@@ -18,99 +18,6 @@ function renderBindings() {
   });
 }
 
-/* ── 히어로 차트 (장식용 랜덤워크, 카드 너비에 맞춰 다시 그린다) ── */
-let chartWidth = 0;
-let chart = null; // 십자선이 쓰는 점 좌표와 지수 값
-
-function renderHeroChart() {
-  const svg = $("#hero-chart");
-  const W = Math.round(svg.clientWidth);
-  const H = Math.round(svg.clientHeight);
-  if (!W || W === chartWidth) return;
-  if (chartWidth) svg.classList.add("static"); // 처음 한 번만 애니메이션
-  chartWidth = W;
-
-  // 매번 같은 모양이 나오도록 시드 고정 난수
-  let seed = 20;
-  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  const N = W < 480 ? 48 : 96;
-  const series = [];
-  let v = 0;
-  for (let i = 0; i < N; i++) {
-    v += rand() - 0.42;
-    series.push(v);
-  }
-
-  const PAD = 8;
-  const min = Math.min(...series);
-  const max = Math.max(...series);
-  const pts = series.map((s, i) => [
-    PAD + (i / (N - 1)) * (W - PAD * 2),
-    H - PAD - ((s - min) / (max - min)) * (H - PAD * 2),
-  ]);
-  const line = pts.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`).join("");
-  const area = `${line}L${W - PAD},${H}L${PAD},${H}Z`;
-  const [lastX, lastY] = pts[pts.length - 1];
-  const grid = [1, 2, 3]
-    .map((i) => `<line x1="0" x2="${W}" y1="${(H / 4) * i}" y2="${(H / 4) * i}" />`)
-    .join("");
-
-  // 장식용 지수: 시작을 100으로 두고 움직임을 키운 값
-  chart = { pts, values: series.map((s) => 100 + (s - series[0]) * 1.8) };
-
-  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
-  svg.innerHTML = `
-    <defs>
-      <clipPath id="chart-clip"><rect class="chart-reveal" width="${W}" height="${H}" /></clipPath>
-    </defs>
-    <g class="chart-grid">${grid}</g>
-    <g clip-path="url(#chart-clip)">
-      <path class="chart-area" d="${area}" />
-      <path class="chart-line" d="${line}" />
-    </g>
-    <circle class="chart-dot" cx="${lastX}" cy="${lastY}" r="5" />
-    <line class="chart-cross" y1="0" y2="${H}" />
-    <circle class="chart-hover-dot" r="5" />
-  `;
-}
-
-// 차트 위에 마우스(또는 손가락)를 올리면 가장 가까운 점에 십자선과 값이 따라붙는다
-function setupChartHover() {
-  const svg = $("#hero-chart");
-  const wrap = svg.closest(".chart-wrap");
-  const tip = $("#chart-tip");
-
-  const show = (e) => {
-    if (!chart) return;
-    const r = svg.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    let i = 0;
-    chart.pts.forEach(([px], k) => {
-      if (Math.abs(px - x) < Math.abs(chart.pts[i][0] - x)) i = k;
-    });
-    const [px, py] = chart.pts[i];
-    const cross = svg.querySelector(".chart-cross");
-    cross.setAttribute("x1", px);
-    cross.setAttribute("x2", px);
-    const dot = svg.querySelector(".chart-hover-dot");
-    dot.setAttribute("cx", px);
-    dot.setAttribute("cy", py);
-
-    tip.textContent = `T+${i}  ${chart.values[i].toFixed(2)}`;
-    const w = wrap.getBoundingClientRect();
-    const left = r.left - w.left + px;
-    const top = r.top - w.top + py;
-    const tx = Math.min(Math.max(left - tip.offsetWidth / 2, 0), w.width - tip.offsetWidth);
-    const ty = top - tip.offsetHeight - 12 < 0 ? top + 12 : top - tip.offsetHeight - 12;
-    tip.style.transform = `translate(${tx}px, ${ty}px)`;
-    wrap.classList.add("chart-hover");
-  };
-
-  svg.addEventListener("pointermove", show);
-  svg.addEventListener("pointerdown", show);
-  svg.addEventListener("pointerleave", () => wrap.classList.remove("chart-hover"));
-}
-
 /* ── 통계 ── */
 function renderStats() {
   $("#stats").innerHTML = (DATA.site.stats ?? [])
@@ -155,7 +62,7 @@ function renderTagline() {
 }
 
 /* ── 소개 ── */
-const VALUE_ICONS = ["books", "code", "chart-line-up", "users-three", "lightbulb"];
+const VALUE_ICONS = ["research", "engineering", "practice", "network", "candles"];
 
 function renderAbout() {
   $("#about-body").innerHTML = (DATA.about.paragraphs ?? []).map((p) => `<p>${multiline(p)}</p>`).join("");
@@ -369,7 +276,4 @@ function renderHome(data) {
   renderVideos();
 }
 
-renderHeroChart();
-setupChartHover();
-addEventListener("resize", () => requestAnimationFrame(renderHeroChart));
 QLab.start(renderHome).catch((err) => console.error(err));

@@ -21,7 +21,7 @@
 
   function renderButtons() {
     document.querySelectorAll("[data-theme-toggle]").forEach((btn) => {
-      btn.innerHTML = `<i class="ph ph-${ICONS[mode]}" aria-hidden="true"></i>`;
+      btn.innerHTML = window.qlabIcon?.(ICONS[mode]) ?? "";
       btn.title = `화면 모드: ${LABELS[mode]}`;
       btn.setAttribute("aria-label", `화면 모드 바꾸기 (지금: ${LABELS[mode]})`);
     });
