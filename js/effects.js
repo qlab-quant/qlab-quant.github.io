@@ -24,45 +24,178 @@
     );
   }
 
-  /* ── 커서를 따라다니는 링 ── */
-  const HOVERABLE = "a, button, summary, label, input, textarea, select, [data-cursor]";
+  /* ── 돋보기: 커서 자리의 페이지를 확대해서 보여 준다 ──
+   * 페이지를 한 벌 복제해 렌즈 안에 크게 놓고, 커서 위치에 맞춰 옮긴다.
+   * 렌즈 광학 효과(가장자리 볼록 왜곡 · 색수차)는 SVG 필터, 유리 반사는 CSS로 그린다. */
+  const LENS = 150; // 렌즈 지름(px)
+  const ZOOM = 1.8; // 확대 배율
+  const BULGE = 14; // 가장자리가 부풀어 보이는 정도(px)
+  const HOVERABLE = "a, button, summary, label, select, [data-cursor]";
+  const NO_LENS = "input, textarea, [contenteditable], iframe";
 
-  function setupCursor() {
+  // 렌즈 가장자리로 갈수록 가운데 쪽을 끌어와 볼록하게 보이게 하는 변위 지도
+  function displacementMap(size) {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    const image = ctx.createImageData(size, size);
+    const r = size / 2;
+    for (let y = 0; y < size; y++) {
+      for (let x = 0; x < size; x++) {
+        const dx = (x + 0.5 - r) / r;
+        const dy = (y + 0.5 - r) / r;
+        const d2 = dx * dx + dy * dy;
+        const k = d2 < 1 ? d2 * d2 : 0;
+        const i = (y * size + x) * 4;
+        image.data[i] = 128 - dx * k * 127;
+        image.data[i + 1] = 128 - dy * k * 127;
+        image.data[i + 2] = 128;
+        image.data[i + 3] = 255;
+      }
+    }
+    ctx.putImageData(image, 0, 0);
+    return canvas.toDataURL();
+  }
+
+  // 빨강 · 초록 · 파랑을 조금씩 다르게 휘게 해서 렌즈 가장자리에 색 번짐(색수차)을 만든다
+  function addLensFilter() {
+    const map = displacementMap(LENS);
+    const channel = (name, scale, matrix) => `
+      <feDisplacementMap in="SourceGraphic" in2="map" scale="${scale}" xChannelSelector="R" yChannelSelector="G" result="d${name}" />
+      <feColorMatrix in="d${name}" type="matrix" values="${matrix}" result="${name}" />`;
+    const wrap = document.createElement("div");
+    wrap.innerHTML = `
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <filter id="lens-optics" x="0" y="0" width="${LENS}" height="${LENS}" filterUnits="userSpaceOnUse"
+                primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+          <feImage href="${map}" x="0" y="0" width="${LENS}" height="${LENS}" preserveAspectRatio="none" result="map" />
+          ${channel("r", BULGE * 2.15, "1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0")}
+          ${channel("g", BULGE * 2, "0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0")}
+          ${channel("b", BULGE * 1.85, "0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0")}
+          <feComposite in="r" in2="g" operator="arithmetic" k2="1" k3="1" result="rg" />
+          <feComposite in="rg" in2="b" operator="arithmetic" k2="1" k3="1" />
+        </filter>
+      </svg>`;
+    document.body.append(wrap.firstElementChild);
+  }
+
+  function setupMagnifier() {
     if (!animated) return;
-    const cursor = document.createElement("div");
-    cursor.className = "cursor";
-    cursor.setAttribute("aria-hidden", "true");
-    cursor.innerHTML = '<div class="cursor-ring"></div>';
-    document.body.append(cursor);
+    const pageSources = [...document.querySelectorAll("main, .site-footer")];
+    const fixedSources = [...document.querySelectorAll(".site-nav")];
+    if (!pageSources.length) return;
 
-    let x = 0, y = 0, cx = 0, cy = 0, frame = 0;
-    const tick = () => {
-      cx = lerp(cx, x, 0.22);
-      cy = lerp(cy, y, 0.22);
-      cursor.style.transform = `translate3d(${cx}px, ${cy}px, 0)`;
-      frame = Math.abs(cx - x) + Math.abs(cy - y) > 0.1 ? requestAnimationFrame(tick) : 0;
+    addLensFilter();
+    const lens = document.createElement("div");
+    lens.className = "magnifier";
+    lens.setAttribute("aria-hidden", "true");
+    lens.style.setProperty("--lens", `${LENS}px`);
+    lens.innerHTML = `
+      <div class="magnifier-glass">
+        <div class="magnifier-page"></div>
+        <div class="magnifier-fixed"></div>
+      </div>
+      <div class="magnifier-shine"></div>
+      <div class="magnifier-handle"></div>`;
+    lens.inert = true;
+    document.body.append(lens);
+    const pageLayer = lens.querySelector(".magnifier-page");
+    const fixedLayer = lens.querySelector(".magnifier-fixed");
+
+    let canvasPairs = [];
+    let stale = true;
+
+    // 원본을 복제한다. 영상은 두 번 불러오지 않게 빈 상자로 바꾸고, 캔버스는 매 프레임 그림을 옮긴다
+    function cloneInto(layer, sources) {
+      const frag = document.createDocumentFragment();
+      sources.forEach((source) => {
+        const copy = source.cloneNode(true);
+        copy.querySelectorAll("iframe, video").forEach((el) => {
+          const box = document.createElement("div");
+          box.className = el.className;
+          el.replaceWith(box);
+        });
+        copy.querySelectorAll("[data-reveal]").forEach((el) => el.classList.add("is-visible"));
+        const originals = source.querySelectorAll("canvas");
+        copy.querySelectorAll("canvas").forEach((c, i) => canvasPairs.push([originals[i], c]));
+        frag.append(copy);
+      });
+      layer.replaceChildren(frag);
+    }
+
+    function rebuild() {
+      canvasPairs = [];
+      const width = `${document.documentElement.clientWidth}px`;
+      pageLayer.style.width = width;
+      fixedLayer.style.width = width;
+      fixedLayer.style.height = `${innerHeight}px`;
+      cloneInto(pageLayer, pageSources);
+      cloneInto(fixedLayer, fixedSources);
+      stale = false;
+    }
+
+    let mx = 0, my = 0, frame = 0, mutationTimer = 0;
+    const render = () => {
+      frame = 0;
+      if (stale) rebuild();
+      const half = LENS / 2;
+      lens.style.transform = `translate3d(${mx - half}px, ${my - half}px, 0)`;
+      pageLayer.style.transform = `translate3d(${half - (mx + scrollX) * ZOOM}px, ${half - (my + scrollY) * ZOOM}px, 0) scale(${ZOOM})`;
+      fixedLayer.style.transform = `translate3d(${half - mx * ZOOM}px, ${half - my * ZOOM}px, 0) scale(${ZOOM})`;
+      canvasPairs.forEach(([from, to]) => {
+        if (!from || !from.width) return;
+        const r = from.getBoundingClientRect();
+        if (r.bottom < 0 || r.top > innerHeight) return;
+        const ctx = to.getContext("2d");
+        ctx.clearRect(0, 0, to.width, to.height);
+        ctx.drawImage(from, 0, 0);
+      });
     };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(render);
+    };
+    const show = (on) => lens.classList.toggle("is-visible", on);
+
+    // 페이지 내용이 바뀌면 잠시 뒤 다시 복제한다
+    // (마우스 효과용 style 변경과, 렌즈 자신 안에서 생긴 변화는 무시)
+    new MutationObserver((records) => {
+      if (records.every((r) => lens.contains(r.target))) return;
+      clearTimeout(mutationTimer);
+      mutationTimer = setTimeout(() => {
+        stale = true;
+        if (lens.classList.contains("is-visible")) schedule();
+      }, 250);
+    }).observe(document.body, {
+      subtree: true,
+      childList: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ["class", "open", "hidden", "src", "aria-pressed", "aria-current", "data-status", "value"],
+    });
+
+    addEventListener("resize", () => {
+      stale = true;
+      schedule();
+    });
+    addEventListener("scroll", schedule, { passive: true });
 
     document.addEventListener(
       "pointermove",
       (e) => {
         if (e.pointerType !== "mouse") return;
-        x = e.clientX;
-        y = e.clientY;
-        if (!cursor.classList.contains("is-visible")) {
-          cx = x;
-          cy = y;
-          cursor.classList.add("is-visible");
-        }
-        cursor.classList.toggle("is-hover", Boolean(e.target.closest?.(HOVERABLE)));
-        if (!frame) frame = requestAnimationFrame(tick);
+        mx = e.clientX;
+        my = e.clientY;
+        const target = e.target.closest?.(NO_LENS);
+        show(!target);
+        lens.classList.toggle("is-hover", Boolean(e.target.closest?.(HOVERABLE)));
+        schedule();
       },
       { passive: true }
     );
-    document.addEventListener("pointerdown", () => cursor.classList.add("is-down"));
-    document.addEventListener("pointerup", () => cursor.classList.remove("is-down"));
+    document.addEventListener("pointerdown", () => lens.classList.add("is-down"));
+    document.addEventListener("pointerup", () => lens.classList.remove("is-down"));
     document.addEventListener("mouseout", (e) => {
-      if (!e.relatedTarget) cursor.classList.remove("is-visible");
+      if (!e.relatedTarget || e.relatedTarget.tagName === "IFRAME") show(false);
     });
   }
 
@@ -210,7 +343,7 @@
   }
 
   setupSpotlight();
-  setupCursor();
+  setupMagnifier();
   setupTilt();
   setupMagnetic();
   setupDotGrid();

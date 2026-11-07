@@ -1,0 +1,24 @@
+# Supabase 무료 프로젝트는 1주일 동안 아무 요청이 없으면 잠깁니다.
+# 사흘마다 갤러리 글 목록을 한 번 읽어서 잠기지 않게 합니다. (갤러리 설정 전에는 건너뜀)
+name: Supabase 깨우기
+
+on:
+  schedule:
+    - cron: "0 3 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: 갤러리 글 목록 읽기
+        run: |
+          URL=$(grep -oP 'url:\s*"\K[^"]+' js/gallery-config.js || true)
+          KEY=$(grep -oP 'anonKey:\s*"\K[^"]+' js/gallery-config.js || true)
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then
+            echo "갤러리 설정 전이라 건너뜁니다."
+            exit 0
+          fi
+          curl -fsS "$URL/rest/v1/posts?select=id&limit=1" -H "apikey: $KEY" -H "Authorization: Bearer $KEY" > /dev/null
+          echo "Supabase 응답 확인"

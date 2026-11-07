@@ -12,16 +12,30 @@ window.SITE_DATA = {
     "description": "Q-Lab은 금융공학, 통계, 프로그래밍을 바탕으로 체계적인 투자 전략을 연구하는 퀀트 투자 동아리입니다.",
     "manifesto": "감이 아니라 데이터로 판단하고\n말이 아니라 백테스트로 증명합니다.\n그 과정을 함께할 사람을 찾고 있어요.",
     "stats": [
-      { "value": "20XX", "label": "설립" },
-      { "value": "OO명", "label": "누적 부원" },
-      { "value": "OO개", "label": "리서치 프로젝트" },
-      { "value": "OO회", "label": "정기 세미나" }
+      {
+        "value": "20XX",
+        "label": "설립"
+      },
+      {
+        "value": "OO명",
+        "label": "누적 부원"
+      },
+      {
+        "value": "OO개",
+        "label": "리서치 프로젝트"
+      },
+      {
+        "value": "OO회",
+        "label": "정기 세미나"
+      }
     ],
     "contact": {
       "email": "qlab@example.com",
       "instagram": "https://instagram.com/",
-      "github": "https://github.com/"
-    }
+      "youtube": "",
+      "github": "https://github.com/qlab-quant"
+    },
+    "githubOrg": "qlab-quant"
   },
   "about": {
     "paragraphs": [
@@ -29,57 +43,160 @@ window.SITE_DATA = {
       "전공은 상관없습니다. 경영·경제 전공자는 코딩을, 공대·자연대 전공자는 금융을 서로에게 배우며 한 팀으로 리서치를 진행합니다."
     ],
     "values": [
-      { "title": "Research", "desc": "논문과 리포트를 읽고, 검증 가능한 가설을 세웁니다." },
-      { "title": "Engineering", "desc": "Python으로 데이터 파이프라인과 백테스트 환경을 직접 만듭니다." },
-      { "title": "Practice", "desc": "모의투자와 대회 참가로 전략을 실전에서 시험합니다." }
+      {
+        "title": "Research",
+        "desc": "논문과 리포트를 읽고, 검증 가능한 가설을 세웁니다."
+      },
+      {
+        "title": "Engineering",
+        "desc": "Python으로 데이터 파이프라인과 백테스트 환경을 직접 만듭니다."
+      },
+      {
+        "title": "Practice",
+        "desc": "모의투자와 대회 참가로 전략을 실전에서 시험합니다."
+      }
     ]
   },
   "activities": [
-    { "title": "정기 세미나", "cycle": "매주", "desc": "금융 이론, 통계, 팩터 투자 등 주제를 정해 부원이 돌아가며 발표합니다." },
-    { "title": "퀀트 스터디", "cycle": "학기 중", "desc": "Python, pandas, 백테스팅 라이브러리를 기초부터 실습 위주로 배웁니다." },
-    { "title": "리서치 프로젝트", "cycle": "학기별", "desc": "3~4명이 팀을 이뤄 전략 하나를 정하고 한 학기 동안 연구·검증합니다." },
-    { "title": "모의투자 · 대회", "cycle": "수시", "desc": "직접 만든 전략으로 모의투자를 운용하고 외부 퀀트 대회에 참가합니다." },
-    { "title": "논문 리딩", "cycle": "격주", "desc": "자산가격결정, 시장 미시구조 등 주요 논문을 함께 읽고 토론합니다." },
-    { "title": "홈커밍 · 네트워킹", "cycle": "학기별", "desc": "업계에 진출한 선배들과 만나 커리어와 실무 이야기를 나눕니다." }
+    {
+      "title": "정기 세미나",
+      "cycle": "매주",
+      "desc": "금융 이론, 통계, 팩터 투자 등 주제를 정해 부원이 돌아가며 발표합니다."
+    },
+    {
+      "title": "퀀트 스터디",
+      "cycle": "학기 중",
+      "desc": "Python, pandas, 백테스팅 라이브러리를 기초부터 실습 위주로 배웁니다."
+    },
+    {
+      "title": "리서치 프로젝트",
+      "cycle": "학기별",
+      "desc": "3~4명이 팀을 이뤄 전략 하나를 정하고 한 학기 동안 연구·검증합니다."
+    },
+    {
+      "title": "모의투자 · 대회",
+      "cycle": "수시",
+      "desc": "직접 만든 전략으로 모의투자를 운용하고 외부 퀀트 대회에 참가합니다."
+    },
+    {
+      "title": "논문 리딩",
+      "cycle": "격주",
+      "desc": "자산가격결정, 시장 미시구조 등 주요 논문을 함께 읽고 토론합니다."
+    },
+    {
+      "title": "홈커밍 · 네트워킹",
+      "cycle": "학기별",
+      "desc": "업계에 진출한 선배들과 만나 커리어와 실무 이야기를 나눕니다."
+    }
   ],
   "projects": [
     {
       "title": "모멘텀 팩터 전략 백테스트",
       "period": "20XX-1",
       "summary": "국내 주식 시장에서 12-1 모멘텀 팩터의 성과를 기간별로 검증하고 거래비용 영향을 분석했습니다.",
-      "tags": ["Python", "팩터 투자", "백테스트"],
+      "tags": [
+        "Python",
+        "팩터 투자",
+        "백테스트"
+      ],
       "link": ""
     },
     {
       "title": "공적분 기반 페어 트레이딩",
       "period": "20XX-1",
       "summary": "동일 업종 종목 쌍의 공적분 관계를 찾아 스프레드 평균회귀 전략을 설계했습니다.",
-      "tags": ["통계적 차익거래", "시계열"],
+      "tags": [
+        "통계적 차익거래",
+        "시계열"
+      ],
       "link": ""
     },
     {
       "title": "뉴스 감성 분석과 단기 수익률",
       "period": "20XX-2",
       "summary": "금융 뉴스 헤드라인의 감성 점수와 다음 날 수익률 사이의 관계를 분석했습니다.",
-      "tags": ["NLP", "머신러닝"],
+      "tags": [
+        "NLP",
+        "머신러닝"
+      ],
       "link": ""
     },
     {
       "title": "변동성 타기팅 자산배분",
       "period": "20XX-2",
       "summary": "목표 변동성에 맞춰 주식·채권 비중을 조절하는 자산배분 전략의 위험 대비 성과를 비교했습니다.",
-      "tags": ["자산배분", "리스크 관리"],
+      "tags": [
+        "자산배분",
+        "리스크 관리"
+      ],
       "link": ""
     }
   ],
+  "research": [
+    {
+      "id": "sample-momentum",
+      "title": "(예시) 국내 주식 12-1 모멘텀 팩터 검증",
+      "date": "2026-11-07",
+      "authors": [
+        "박OO",
+        "최OO"
+      ],
+      "summary": "리서치 글 형식을 보여 주는 예시예요. 수식, 표, 코드, 그림을 어떻게 쓰는지 확인하고 실제 리서치로 바꿔 주세요.",
+      "tags": [
+        "팩터 투자",
+        "백테스트"
+      ],
+      "format": "article",
+      "file": "research/sample-momentum.md",
+      "pdf": "",
+      "repo": ""
+    }
+  ],
+  "videos": [],
   "membersTerm": "20XX년 운영진",
   "members": [
-    { "name": "김OO", "role": "회장", "major": "경영학과 OO학번", "intro": "동아리 운영 총괄", "photo": "" },
-    { "name": "이OO", "role": "부회장", "major": "경제학과 OO학번", "intro": "세미나 기획", "photo": "" },
-    { "name": "박OO", "role": "리서치팀장", "major": "통계학과 OO학번", "intro": "리서치 프로젝트 관리", "photo": "" },
-    { "name": "최OO", "role": "개발팀장", "major": "컴퓨터공학과 OO학번", "intro": "백테스트 환경 개발", "photo": "" },
-    { "name": "정OO", "role": "대외협력", "major": "산업공학과 OO학번", "intro": "대회 · 네트워킹 담당", "photo": "" },
-    { "name": "강OO", "role": "총무", "major": "수학과 OO학번", "intro": "회계 · 행사 운영", "photo": "" }
+    {
+      "name": "김OO",
+      "role": "회장",
+      "major": "경영학과 OO학번",
+      "intro": "동아리 운영 총괄",
+      "photo": ""
+    },
+    {
+      "name": "이OO",
+      "role": "부회장",
+      "major": "경제학과 OO학번",
+      "intro": "세미나 기획",
+      "photo": ""
+    },
+    {
+      "name": "박OO",
+      "role": "리서치팀장",
+      "major": "통계학과 OO학번",
+      "intro": "리서치 프로젝트 관리",
+      "photo": ""
+    },
+    {
+      "name": "최OO",
+      "role": "개발팀장",
+      "major": "컴퓨터공학과 OO학번",
+      "intro": "백테스트 환경 개발",
+      "photo": ""
+    },
+    {
+      "name": "정OO",
+      "role": "대외협력",
+      "major": "산업공학과 OO학번",
+      "intro": "대회 · 네트워킹 담당",
+      "photo": ""
+    },
+    {
+      "name": "강OO",
+      "role": "총무",
+      "major": "수학과 OO학번",
+      "intro": "회계 · 행사 운영",
+      "photo": ""
+    }
   ],
   "recruit": {
     "status": "upcoming",
@@ -93,10 +210,22 @@ window.SITE_DATA = {
       "전공 · 학년 무관"
     ],
     "steps": [
-      { "title": "서류 접수", "date": "XX.XX ~ XX.XX" },
-      { "title": "서류 발표", "date": "XX.XX" },
-      { "title": "면접", "date": "XX.XX ~ XX.XX" },
-      { "title": "최종 발표", "date": "XX.XX" }
+      {
+        "title": "서류 접수",
+        "date": "XX.XX ~ XX.XX"
+      },
+      {
+        "title": "서류 발표",
+        "date": "XX.XX"
+      },
+      {
+        "title": "면접",
+        "date": "XX.XX ~ XX.XX"
+      },
+      {
+        "title": "최종 발표",
+        "date": "XX.XX"
+      }
     ],
     "faq": [
       {

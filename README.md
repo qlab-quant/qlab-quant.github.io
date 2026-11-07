@@ -10,16 +10,25 @@
 
 ```
 index.html            홈페이지
+research.html         리서치 페이지 (목록 · 글 · 코드 저장소)
+gallery.html          갤러리 (회원 게시판)
 admin.html            관리 페이지 (운영진 전용)
-css/style.css         홈페이지 디자인
+404.html              없는 주소로 들어왔을 때 보이는 페이지
+css/style.css         사이트 디자인 (모든 페이지 공통)
 css/admin.css         관리 페이지 디자인
 js/data.js            ← 사이트에 들어가는 모든 내용
-js/main.js            data.js 내용을 홈페이지에 그려 주는 코드
-js/admin.js           관리 페이지 동작
-js/admin-schema.js    관리 페이지에 보여줄 메뉴와 입력칸 정의
-js/admin-github.js    GitHub 저장소 읽기·쓰기
+js/common.js          모든 페이지 공통: 내비게이션, 푸터, 내용 불러오기
+js/main.js            홈페이지 그리기
+js/research.js        리서치 페이지 그리기 (마크다운 · 수식 · GitHub 저장소 정보)
+js/gallery.js         갤러리 화면
+js/gallery-api.js     갤러리 ↔ Supabase 연결
+js/gallery-config.js  갤러리가 쓰는 Supabase 주소와 공개 키
+js/gallery-mock.js    내 컴퓨터에서 갤러리를 시험해 보는 가짜 서버 (gallery.html?mock)
+js/effects.js         마우스 효과 (돋보기, 점 격자, 카드 빛, 기울기, 자석 버튼)
 js/theme.js           화면 모드(시스템 · 라이트 · 다크) 전환
-404.html              없는 주소로 들어왔을 때 보이는 페이지
+js/admin*.js          관리 페이지 동작 · 메뉴 정의 · GitHub 저장
+research/             리서치 본문(.md), PDF, 그림(images/)
+supabase/schema.sql   갤러리 데이터베이스와 보안 규칙
 images/members/       멤버 사진 (관리 페이지에서 올리면 여기에 저장됨)
 favicon.svg           브라우저 탭 아이콘
 ```
@@ -53,6 +62,44 @@ favicon.svg           브라우저 탭 아이콘
 - **임시 저장**: 저장하지 않고 창을 닫아도 같은 브라우저에서 다시 열면 이어서 편집할지 물어봅니다.
 
 `js/data.js`를 직접 고쳐도 되지만, JSON 형식(큰따옴표 사용, 마지막 항목 뒤 쉼표 금지)을 지켜야 관리 페이지에서 다시 읽을 수 있습니다.
+
+## 리서치
+
+관리 페이지 **리서치** 메뉴에서 올립니다. 리서치 페이지 주소: https://qlab-quant.github.io/research.html
+
+- **형식**: '사이트에서 읽는 글'(마크다운)이나 'PDF 파일' 중 고릅니다.
+- **글**: 본문 칸에 마크다운으로 씁니다. 제목은 `##`, 수식은 `$r_t$`나 `$$ ... $$`, 표와 코드 블록도 됩니다. **그림 넣기** 버튼으로 그림을 올리면 커서 자리에 들어갑니다. 예시는 `research/sample-momentum.md`를 보세요.
+- **PDF**: **PDF 올리기**로 20MB 이하 파일을 올립니다.
+- **코드 저장소**: `qlab-quant/저장소이름`이나 GitHub 주소를 넣으면 설명, 별, 언어, 업데이트 날짜가 자동으로 보입니다.
+- 리서치 페이지 아래에는 `qlab-quant` 조직의 공개 저장소가 자동으로 나옵니다(사이트 저장소 제외). 조직 이름은 **기본 정보 → GitHub 조직 이름**에서 바꿉니다.
+
+## 영상 (유튜브)
+
+**기본 정보 → 유튜브 채널 주소**에 채널 주소를 넣으면 푸터에 유튜브 링크가 생기고, **영상** 메뉴에 영상을 추가하면 홈페이지에 '영상' 섹션이 나타납니다. 둘 다 비어 있으면 섹션은 숨겨집니다.
+
+## 갤러리 (회원 게시판)
+
+회원가입 → 운영진 승인 → 승인된 회원만 글 · 댓글 · 추천 · 사진을 올리는 게시판입니다. 읽기는 누구나 할 수 있습니다. 로그인과 데이터 저장은 [Supabase](https://supabase.com)(무료)를 씁니다.
+
+### 처음 설정 (한 번만)
+
+1. 동아리 공용 계정으로 https://supabase.com 에 가입하고 **New project**를 만듭니다. Region은 `Northeast Asia (Seoul)`, 데이터베이스 비밀번호는 따로 보관합니다.
+2. **SQL Editor**에 `supabase/schema.sql` 내용을 통째로 붙여 넣고 **Run** 합니다.
+3. **Authentication → Sign In / Providers → Email**에서 **Confirm email**을 끕니다. 가입은 운영진 승인으로 걸러지고, 무료 메일 발송은 시간당 몇 통으로 제한되어 있어서 켜 두면 가입이 막힙니다.
+4. **Authentication → URL Configuration**의 Site URL을 `https://qlab-quant.github.io`로 바꿉니다.
+5. **Project Settings → API**의 `Project URL`과 `anon public` 키를 `js/gallery-config.js`에 넣고 push 합니다. anon 키는 공개용이라 괜찮지만, **`service_role` 키는 절대 넣거나 공유하지 마세요.**
+6. 사이트 갤러리에서 회원가입을 한 뒤, SQL Editor에서 아래 한 줄로 첫 운영진을 지정합니다.
+   ```sql
+   update public.profiles set status = 'approved', role = 'admin' where nickname = '내닉네임';
+   ```
+
+### 운영
+
+- 가입 신청은 갤러리의 **회원 관리**(`gallery.html#/members`)에서 승인하거나 거절합니다. 관리 페이지 위쪽 **갤러리 회원** 링크로도 갈 수 있습니다.
+- 회원을 **운영진으로** 바꾸면 그 사람도 승인과 글 삭제를 할 수 있습니다. 문제가 있는 회원은 **이용 제한**으로 바꾸면 글을 쓸 수 없습니다.
+- 무료 Supabase 프로젝트는 1주일 동안 요청이 없으면 멈춥니다. 저장소의 GitHub Actions(**Supabase 깨우기**)가 사흘마다 깨워 줍니다.
+- 비밀번호 찾기는 메일 발송 설정이 필요해 아직 없습니다. 회원이 비밀번호를 잊으면 Supabase **Authentication → Users**에서 계정을 지우고 다시 가입하게 해 주세요.
+- 내 컴퓨터에서 `gallery.html?mock`으로 열면 Supabase 없이 가짜 데이터로 화면을 시험해 볼 수 있습니다.
 
 ## 관리 페이지
 

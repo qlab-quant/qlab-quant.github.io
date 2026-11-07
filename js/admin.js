@@ -16,6 +16,7 @@ const STORAGE_KEYS = {
   token: "qlab-admin-token",
   draft: "qlab-admin-draft",
   preview: "qlab-preview",
+  previewFiles: "qlab-preview-files",
 };
 
 const DATA_FILE_HEADER = `/*
@@ -36,6 +37,7 @@ const state = {
   section: ADMIN_SECTIONS[0].id,
   saving: false,
   lastSavedAt: null,
+  files: {}, // data.js 밖에 따로 저장하는 파일 (리서치 본문 .md): 경로 → { text, original, sha }
 };
 
 const openItems = new WeakSet(); // 펼쳐 둔 목록 항목
@@ -96,9 +98,16 @@ function sortNotices(data) {
 const snapshot = (value) => JSON.stringify(value ?? null);
 const sectionById = (id) => ADMIN_SECTIONS.find((s) => s.id === id);
 const sectionKeys = (section) => [...new Set(section.fields.map((f) => f.key.split(".")[0]))];
-const isDirty = () => snapshot(state.data) !== snapshot(state.saved);
+// 지금 리서치 목록이 쓰고 있는 본문 파일 중 고친 것 (지운 리서치의 파일은 저장하지 않는다)
+function dirtyFiles() {
+  const used = new Set((state.data?.research ?? []).filter((r) => r.format !== "pdf").map((r) => r.file));
+  return Object.entries(state.files).filter(([path, f]) => used.has(path) && f.text !== f.original);
+}
+const isDataDirty = () => snapshot(state.data) !== snapshot(state.saved);
+const isDirty = () => isDataDirty() || dirtyFiles().length > 0;
 const isSectionDirty = (section) =>
-  sectionKeys(section).some((key) => snapshot(state.data[key]) !== snapshot(state.saved[key]));
+  sectionKeys(section).some((key) => snapshot(state.data[key]) !== snapshot(state.saved[key])) ||
+  (section.id === "research" && dirtyFiles().length > 0);
 const dirtySections = () => ADMIN_SECTIONS.filter(isSectionDirty);
 
 const getPath = (obj, path) => path.reduce((o, key) => o?.[key], obj);
@@ -180,7 +189,7 @@ function describeError(err, { login = false } = {}) {
 let fieldSeq = 0;
 const splitClean = (text, separator) => text.split(separator).map((s) => s.trim()).filter(Boolean);
 
-function renderField(field, path, onEdit) {
+function renderField(field, path, onEdit, item) {
   if (field.type === "list") return renderList(field, path);
 
   const id = `field-${++fieldSeq}`;
@@ -191,12 +200,12 @@ function renderField(field, path, onEdit) {
   };
   return h("div", { className: `field${field.half ? " half" : ""}` },
     h("label", { className: "field-label", for: id }, field.label),
-    createControl(field, getPath(state.data, path), commit, id),
+    createControl(field, getPath(state.data, path), commit, id, item),
     field.help && h("p", { className: "field-help" }, field.help),
   );
 }
 
-function createControl(field, value, commit, id) {
+function createControl(field, value, commit, id, item) {
   const base = { id, className: "input", placeholder: field.placeholder };
   const onText = (e) => commit(e.target.value);
 
@@ -204,8 +213,13 @@ function createControl(field, value, commit, id) {
     case "textarea":
       return h("textarea", { ...base, rows: field.rows ?? 4, value: value ?? "", oninput: onText });
     case "select":
-      return h("select", { ...base, value: value ?? "", onchange: onText },
-        field.options.map((o) => h("option", { value: o.value }, o.label)));
+      return h("select", {
+        ...base, value: value ?? "",
+        onchange: (e) => {
+          commit(e.target.value);
+          if (field.rerender) renderSection();
+        },
+      }, field.options.map((o) => h("option", { value: o.value }, o.label)));
     case "lines":
       return h("textarea", {
         ...base, rows: field.rows ?? 4, value: (value ?? []).join("\n"),
@@ -223,6 +237,10 @@ function createControl(field, value, commit, id) {
       });
     case "image":
       return createImageControl(base, value, commit);
+    case "markdown-file":
+      return createMarkdownControl(base, value, item);
+    case "pdf-file":
+      return createPdfControl(base, value, commit, item);
     default:
       return h("input", { ...base, type: field.type ?? "text", value: value ?? "", oninput: onText });
   }
@@ -297,6 +315,174 @@ function resizeImage(file, size) {
   });
 }
 
+/* ─────────────── 리서치 본문 · PDF (data.js 밖에 따로 저장하는 파일) ─────────────── */
+const ARTICLE_TEMPLATE = `## 요약
+
+이 리서치에서 무엇을 확인했는지 두세 문장으로 써 주세요.
+
+## 방법
+
+수식은 $r_t$ 처럼 문장 안에 쓰거나, 따로 줄에 $$ ... $$ 로 감싸면 돼요.
+
+## 결과
+
+| 구간 | 연 수익률 | 샤프 지수 |
+| --- | --- | --- |
+|  |  |  |
+
+## 결론과 한계
+`;
+
+const fileLoads = new Map();
+
+// 본문 파일은 처음 펼칠 때 한 번만 불러와 state.files에 담아 둔다
+function loadFileOnce(path) {
+  if (state.files[path]) return Promise.resolve(state.files[path]);
+  if (!fileLoads.has(path)) {
+    fileLoads.set(path, (async () => {
+      let text = null;
+      let sha = null;
+      if (state.mode === "github") {
+        try {
+          ({ text, sha } = await state.client.readFile(path));
+        } catch (err) {
+          if (err.status !== 404) throw err;
+        }
+      } else {
+        const res = await fetch(`${path}?v=${Date.now()}`, { cache: "no-store" });
+        if (res.ok) text = await res.text();
+      }
+      // 아직 없는 파일(새 리서치)은 틀을 채워 두고, 저장할 때 새로 만든다
+      state.files[path] = text == null ? { text: ARTICLE_TEMPLATE, original: "", sha: null } : { text, original: text, sha };
+      return state.files[path];
+    })().finally(() => fileLoads.delete(path)));
+  }
+  return fileLoads.get(path);
+}
+
+function readAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("파일을 읽을 수 없어요."));
+    reader.readAsDataURL(file);
+  });
+}
+
+// 그림은 가로 1600px보다 크면 줄이고, 작으면 원본 그대로 올린다 (PNG 그래프가 흐려지지 않게)
+async function shrinkImage(file, max = 1600) {
+  const original = await readAsDataUrl(file);
+  if (file.type === "image/gif") return original;
+  const img = await new Promise((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error("이미지 파일을 읽을 수 없어요."));
+    el.src = original;
+  });
+  if (img.width <= max) return original;
+  const canvas = h("canvas", { width: max, height: Math.round((img.height * max) / img.width) });
+  canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", 0.88);
+}
+
+async function uploadArticleImage(file, id) {
+  const ext = { "image/png": "png", "image/gif": "gif", "image/webp": "webp" }[file.type] ?? "jpg";
+  const dataUrl = await shrinkImage(file);
+  const path = `research/images/${id}-${Date.now()}.${dataUrl.startsWith("data:image/jpeg") ? "jpg" : ext}`;
+  await state.client.writeFile(path, { base64: dataUrl.split(",")[1], message: "관리자: 리서치 이미지 추가" });
+  return path;
+}
+
+function createMarkdownControl(base, path, item) {
+  const canUpload = state.mode === "github";
+  const textarea = h("textarea", {
+    ...base, className: "input input-code", rows: 22, spellcheck: "false", disabled: true, value: "본문을 불러오는 중…",
+    oninput: (e) => {
+      state.files[path].text = e.target.value;
+      onDataChange();
+    },
+  });
+  loadFileOnce(path)
+    .then((file) => {
+      textarea.value = file.text;
+      textarea.disabled = false;
+    })
+    .catch((err) => {
+      textarea.value = "";
+      toast(describeError(err), "error");
+    });
+
+  const imageInput = h("input", {
+    type: "file", accept: "image/*", hidden: true,
+    onchange: async (e) => {
+      const file = e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      imageBtn.disabled = true;
+      imageBtn.textContent = "올리는 중…";
+      try {
+        const src = await uploadArticleImage(file, item.id);
+        textarea.setRangeText(`\n![그림 설명](${src})\n`, textarea.selectionStart, textarea.selectionEnd, "end");
+        textarea.dispatchEvent(new Event("input"));
+        toast("그림을 올렸어요. '그림 설명'을 바꿔 주세요. 사이트에는 저장하고 1~2분 뒤 보여요.");
+      } catch (err) {
+        toast(describeError(err), "error");
+      } finally {
+        imageBtn.disabled = false;
+        imageBtn.textContent = "그림 넣기";
+      }
+    },
+  });
+  const imageBtn = h("button", {
+    type: "button", className: "btn btn-ghost btn-sm", disabled: !canUpload,
+    title: canUpload ? "커서가 있는 자리에 그림을 넣어요" : "GitHub로 로그인하면 그림을 올릴 수 있어요",
+    onclick: () => imageInput.click(),
+  }, "그림 넣기");
+
+  return h("div", { className: "md-control" },
+    h("div", { className: "md-toolbar" },
+      h("p", { className: "field-help" }, "제목은 ##, 굵게는 **글자**, 수식은 $...$ 또는 $$...$$. 표와 코드 블록도 돼요."),
+      imageBtn,
+      imageInput),
+    textarea);
+}
+
+function createPdfControl(base, value, commit, item) {
+  const canUpload = state.mode === "github";
+  const status = h("p", { className: "field-help" }, value ? `올라간 파일: ${value}` : "아직 PDF가 없어요.");
+  const fileInput = h("input", {
+    type: "file", accept: "application/pdf", hidden: true,
+    onchange: async (e) => {
+      const file = e.target.files[0];
+      e.target.value = "";
+      if (!file) return;
+      if (file.type !== "application/pdf") return toast("PDF 파일만 올릴 수 있어요.", "error");
+      if (file.size > 20 * 1024 * 1024) return toast("20MB 이하의 PDF만 올릴 수 있어요.", "error");
+      button.disabled = true;
+      button.textContent = "올리는 중…";
+      try {
+        const path = `research/${item.id}.pdf`;
+        const [dataUrl, sha] = await Promise.all([readAsDataUrl(file), state.client.fileSha(path)]);
+        await state.client.writeFile(path, { base64: dataUrl.split(",")[1], message: "관리자: 리서치 PDF 올리기", sha });
+        commit(path);
+        status.textContent = `올라간 파일: ${path}`;
+        toast("PDF를 올렸어요. '저장하기'를 누르면 리서치 목록에 반영돼요.");
+      } catch (err) {
+        toast(describeError(err), "error");
+      } finally {
+        button.disabled = false;
+        button.textContent = "PDF 올리기";
+      }
+    },
+  });
+  const button = h("button", {
+    id: base.id, type: "button", className: "btn btn-ghost btn-sm", disabled: !canUpload,
+    title: canUpload ? null : "GitHub로 로그인하면 PDF를 올릴 수 있어요",
+    onclick: () => fileInput.click(),
+  }, "PDF 올리기");
+  return h("div", { className: "pdf-control" }, button, fileInput, status);
+}
+
 /* ─────────────── 목록 ─────────────── */
 function renderList(field, path) {
   let items = getPath(state.data, path);
@@ -344,7 +530,9 @@ function renderCardItem(field, path, items, index) {
   },
     h("summary", {}, title, meta, itemActions(items, index)),
     h("div", { className: "item-body" },
-      field.fields.map((f) => renderField(f, [...path, index, ...f.key.split(".")], refresh))),
+      field.fields
+        .filter((f) => !f.showIf || f.showIf(item))
+        .map((f) => renderField(f, [...path, index, ...f.key.split(".")], refresh, item))),
   );
   focusIfNew(item, details);
   return details;
@@ -476,11 +664,15 @@ async function save() {
   const reordered = sortNotices(state.data);
 
   if (state.mode === "local") {
-    downloadFile("data.js", buildDataFile(state.data));
+    dirtyFiles().forEach(([path, file]) => {
+      downloadFile(path.split("/").pop(), file.text);
+      file.original = file.text;
+    });
+    if (isDataDirty()) downloadFile("data.js", buildDataFile(state.data));
     markSaved();
     updateStatus();
     if (reordered) renderSection();
-    toast("data.js를 내려받았어요. 프로젝트의 js 폴더에 있는 파일과 바꿔 주세요.");
+    toast("파일을 내려받았어요. 프로젝트의 같은 이름 파일과 바꿔 주세요.");
     return;
   }
 
@@ -488,10 +680,24 @@ async function save() {
   state.saving = true;
   updateStatus();
   try {
-    state.sha = await commitData(state.data, state.sha, message);
+    for (const [path, file] of dirtyFiles()) {
+      try {
+        file.sha = await state.client.writeFile(path, { base64: utf8ToBase64(file.text), message: `관리자: 리서치 본문 수정 (${path})`, sha: file.sha });
+        file.original = file.text;
+      } catch (err) {
+        if (err.status === 409) err.message = "다른 운영진이 이 리서치 본문을 먼저 고쳤어요. 새로고침해서 최신 본문을 불러온 뒤 다시 고쳐 주세요.";
+        err.fileConflict = true;
+        throw err;
+      }
+    }
+    if (isDataDirty()) state.sha = await commitData(state.data, state.sha, message);
     markSaved();
     toast("저장했어요. 1~2분 뒤 사이트에 반영돼요.");
   } catch (err) {
+    if (err.fileConflict && err.status === 409) {
+      toast(err.message, "error", 9000);
+      return;
+    }
     if (err.status !== 409) {
       toast(describeError(err), "error", 7000);
       return;
@@ -537,14 +743,23 @@ async function resolveConflict(message) {
 function revert() {
   if (!confirm("저장하지 않은 수정사항을 모두 되돌릴까요?")) return;
   state.data = structuredClone(state.saved);
+  Object.values(state.files).forEach((file) => {
+    file.text = file.original || file.text;
+  });
+  Object.keys(state.files).forEach((path) => {
+    if (!state.files[path].original) delete state.files[path];
+  });
   storage.remove(STORAGE_KEYS.draft);
   renderSection();
   updateStatus();
 }
 
+// 저장 전 내용(리서치 본문 포함)을 넘겨 주고, 보고 있던 메뉴에 맞는 페이지를 연다
 function openPreview() {
   storage.set(STORAGE_KEYS.preview, JSON.stringify(state.data));
-  window.open("index.html?preview", "qlab-preview");
+  const files = Object.fromEntries(Object.entries(state.files).map(([path, f]) => [path, f.text]));
+  storage.set(STORAGE_KEYS.previewFiles, JSON.stringify(files));
+  window.open(state.section === "research" ? "research.html?preview" : "index.html?preview", "qlab-preview");
 }
 
 function downloadFile(name, text) {

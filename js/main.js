@@ -1,90 +1,7 @@
-// 화면 렌더링 스크립트. 내용은 관리 페이지(admin.html)나 js/data.js에서 수정하세요.
+// 홈페이지 렌더링. 공용 함수와 내비게이션 · 푸터는 common.js에 있습니다.
+// 내용은 관리 페이지(admin.html)나 js/data.js에서 수정하세요.
 
-const $ = (sel) => document.querySelector(sel);
-
-const PREVIEW_KEY = "qlab-preview";
-const isPreview = new URLSearchParams(location.search).has("preview");
-const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 let DATA;
-
-function esc(value = "") {
-  return String(value).replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
-  })[c]);
-}
-
-// \n 을 <br> 로 바꿔 줄바꿈을 살린다
-const multiline = (value) => esc(value).replace(/\n/g, "<br>");
-
-const pad2 = (n) => String(n).padStart(2, "0");
-const icon = (name) => `<i class="ph ph-${name}" aria-hidden="true"></i>`;
-
-// javascript: 처럼 위험한 주소는 링크로 쓰지 않는다
-function safeUrl(url = "") {
-  const value = String(url).trim();
-  if (/^(https?:|mailto:)/i.test(value)) return value;
-  return /^[a-z][a-z0-9+.-]*:/i.test(value) ? "" : value;
-}
-
-const listHtml = (items, render) =>
-  items?.length ? items.map(render).join("") : `<li class="empty">아직 등록된 내용이 없어요.</li>`;
-
-// 관리 페이지에서 저장한 내용이 바로 보이도록 data.js는 캐시 없이 불러온다
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.src = src;
-    script.onload = resolve;
-    script.onerror = () => reject(new Error(`${src}를 불러오지 못했습니다.`));
-    document.head.append(script);
-  });
-}
-
-// 관리 페이지의 '미리보기'는 저장 전 내용을 localStorage로 넘겨준다
-function readPreviewData() {
-  try {
-    return JSON.parse(localStorage.getItem(PREVIEW_KEY));
-  } catch {
-    return null;
-  }
-}
-
-/* ── 모집 상태와 지원 버튼 ── */
-const RECRUIT_STATUS = {
-  open: { label: "모집 중", button: "지원하기" },
-  upcoming: { label: "모집 예정", button: "모집 예정" },
-  closed: { label: "모집 마감", button: "모집 마감" },
-};
-
-const recruitStatus = () => RECRUIT_STATUS[DATA.recruit.status] ?? RECRUIT_STATUS.closed;
-
-// 첫 화면 · 메뉴 · 마지막 안내의 버튼은 모두 같은 곳으로 보낸다
-function ctaInfo() {
-  const applyUrl = safeUrl(DATA.recruit.applyUrl);
-  if (DATA.recruit.status === "open" && applyUrl) {
-    return { label: "지원서 작성하기", href: applyUrl, external: true };
-  }
-  const label = DATA.recruit.status === "upcoming" ? "모집 일정 보기" : "모집 안내 보기";
-  return { label, href: "#recruit", external: false };
-}
-
-function renderCtas() {
-  const cta = ctaInfo();
-  document.querySelectorAll("[data-cta]").forEach((a) => {
-    a.href = cta.href;
-    a.innerHTML = `${esc(cta.label)} ${icon(cta.external ? "arrow-up-right" : "arrow-right")}`;
-    if (cta.external) {
-      a.target = "_blank";
-      a.rel = "noopener";
-    } else {
-      a.removeAttribute("target");
-      a.removeAttribute("rel");
-    }
-  });
-
-  const period = DATA.recruit.period ? ` · ${DATA.recruit.period}` : "";
-  $("#hero-note").textContent = `${recruitStatus().label}${period}`;
-}
 
 /* ── 텍스트 바인딩 ── */
 function renderBindings() {
@@ -308,7 +225,7 @@ function renderMembers() {
 /* ── 모집 ── */
 function renderRecruit() {
   const recruit = DATA.recruit;
-  const status = recruitStatus();
+  const status = recruitStatus(DATA);
   const applyUrl = safeUrl(recruit.applyUrl);
 
   ["#recruit-badge", "#cta-badge"].forEach((sel) => {
@@ -385,111 +302,62 @@ function renderNotices() {
   draw();
 }
 
-/* ── 푸터 ── */
-function renderFooter() {
-  const { email, instagram, github } = DATA.site.contact ?? {};
-  const links = [
-    email && { icon: "envelope-simple", text: email, href: `mailto:${email}` },
-    safeUrl(instagram) && { icon: "instagram-logo", text: "Instagram", href: safeUrl(instagram) },
-    safeUrl(github) && { icon: "github-logo", text: "GitHub", href: safeUrl(github) },
-  ].filter(Boolean);
+function renderHeroNote() {
+  const period = DATA.recruit.period ? ` · ${DATA.recruit.period}` : "";
+  $("#hero-note").textContent = `${recruitStatus(DATA).label}${period}`;
+}
 
-  $("#contact-list").innerHTML = links
-    .map((l) => {
-      const external = l.href.startsWith("http") ? ' target="_blank" rel="noopener"' : "";
-      return `<li><a href="${esc(l.href)}"${external}>${icon(l.icon)}${esc(l.text)}</a></li>`;
-    })
+/* ── 영상 (유튜브) ── */
+// 여러 형태의 유튜브 주소에서 영상 ID만 꺼낸다
+function youtubeId(url = "") {
+  const match = String(url).match(
+    /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/|v\/))([\w-]{11})/
+  );
+  return match ? match[1] : "";
+}
+
+function renderVideos() {
+  const videos = (DATA.videos ?? []).map((v) => ({ ...v, id: youtubeId(v.url) })).filter((v) => v.id);
+  const channel = safeUrl(DATA.site.contact?.youtube);
+  const section = $("#videos");
+  section.hidden = !videos.length && !channel;
+  if (section.hidden) return;
+
+  const list = $("#video-list");
+  list.hidden = !videos.length;
+  list.innerHTML = videos
+    .map((v) => `
+      <li class="video spotlight">
+        <button class="video-thumb" type="button" data-video="${esc(v.id)}" aria-label="영상 재생: ${esc(v.title)}">
+          <img src="https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg" alt="" loading="lazy" />
+          <span class="video-play">${icon("play")}</span>
+        </button>
+        <h3>${esc(v.title)}</h3>
+      </li>`)
     .join("");
 
-  $("#copyright").textContent = `© ${new Date().getFullYear()} ${DATA.site.name}. All rights reserved.`;
-}
-
-// 관리 페이지에 로그인한 상태면 돌아가는 버튼을 보여 준다 (토큰 값은 읽지 않고 있는지만 본다)
-function showAdminShortcut() {
-  try {
-    const key = "qlab-admin-token";
-    $("#admin-fab").hidden = !(sessionStorage.getItem(key) || localStorage.getItem(key));
-  } catch {}
-}
-
-function renderPreviewBanner() {
-  const banner = document.createElement("div");
-  banner.className = "preview-banner";
-  banner.textContent = "미리보기 · 아직 저장하지 않은 내용이에요";
-  document.body.append(banner);
-}
-
-/* ── 스크롤하면 섹션이 살짝 올라오며 나타남 (한 번만) ── */
-function setupReveal() {
-  const items = document.querySelectorAll("[data-reveal]");
-  if (!("IntersectionObserver" in window)) {
-    items.forEach((el) => el.classList.add("is-visible"));
-    return;
-  }
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add("is-visible");
-        observer.unobserve(entry.target);
-      });
-    },
-    { rootMargin: "0px 0px -10% 0px" }
-  );
-  items.forEach((el) => observer.observe(el));
-}
-
-/* ── 내비게이션 · 모바일 메뉴 · 현재 섹션 표시 ── */
-function setupNav() {
-  const menuBtn = $("#menu-btn");
-  const mobileMenu = $("#mobile-menu");
-
-  const setMenu = (open) => {
-    document.body.classList.toggle("menu-open", open);
-    menuBtn.setAttribute("aria-expanded", String(open));
-    menuBtn.setAttribute("aria-label", open ? "메뉴 닫기" : "메뉴 열기");
-    mobileMenu.inert = !open;
-  };
-  const isOpen = () => document.body.classList.contains("menu-open");
-
-  menuBtn.addEventListener("click", () => setMenu(!isOpen()));
-  mobileMenu.addEventListener("click", (e) => {
-    if (e.target.closest("a")) setMenu(false);
-  });
-  addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && isOpen()) setMenu(false);
-  });
-  matchMedia("(min-width: 821px)").addEventListener("change", (e) => {
-    if (e.matches) setMenu(false);
+  // 썸네일을 누를 때만 유튜브 플레이어를 불러온다 (페이지가 가벼워진다)
+  list.addEventListener("click", (e) => {
+    const thumb = e.target.closest("[data-video]");
+    if (!thumb) return;
+    const iframe = document.createElement("iframe");
+    iframe.className = "video-frame";
+    iframe.src = `https://www.youtube-nocookie.com/embed/${thumb.dataset.video}?autoplay=1&rel=0`;
+    iframe.title = thumb.getAttribute("aria-label");
+    iframe.allow = "autoplay; encrypted-media; picture-in-picture";
+    iframe.allowFullscreen = true;
+    thumb.replaceWith(iframe);
   });
 
-  const links = [...document.querySelectorAll("#nav a")];
-  const observer = new IntersectionObserver(
-    (entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        links.forEach((a) => a.classList.toggle("active", a.hash === `#${entry.target.id}`));
-      });
-    },
-    { rootMargin: "-45% 0px -50% 0px" }
-  );
-  document.querySelectorAll("main section[id]").forEach((s) => observer.observe(s));
+  const link = $("#youtube-link");
+  link.hidden = !channel;
+  if (channel) link.href = channel;
 }
 
-async function start() {
-  setupNav();
-  setupReveal();
-  renderHeroChart();
-  setupChartHover();
-  addEventListener("resize", () => requestAnimationFrame(renderHeroChart));
-  if (!isPreview) showAdminShortcut();
-
-  const preview = isPreview && readPreviewData();
-  if (!preview) await loadScript(`js/data.js?v=${Date.now()}`);
-  DATA = preview || window.SITE_DATA;
-
+function renderHome(data) {
+  DATA = data;
   renderBindings();
-  renderCtas();
+  renderHeroNote();
   renderStats();
   renderTagline();
   renderAbout();
@@ -498,8 +366,10 @@ async function start() {
   renderMembers();
   renderRecruit();
   renderNotices();
-  renderFooter();
-  if (preview) renderPreviewBanner();
+  renderVideos();
 }
 
-start().catch((err) => console.error(err));
+renderHeroChart();
+setupChartHover();
+addEventListener("resize", () => requestAnimationFrame(renderHeroChart));
+QLab.start(renderHome).catch((err) => console.error(err));

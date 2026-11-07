@@ -49,6 +49,17 @@ function createGitHubClient({ owner, repo, branch, token }) {
       return { text: base64ToUtf8(file.content), sha: file.sha };
     },
 
+    // 이미 있는 파일이면 sha, 없으면 null (파일을 바꿔 올릴 때 쓴다)
+    async fileSha(path) {
+      try {
+        const file = await request(`${repoUrl}/contents/${encodePath(path)}?ref=${encodeURIComponent(branch)}`);
+        return file.sha;
+      } catch (err) {
+        if (err.status === 404) return null;
+        throw err;
+      }
+    },
+
     // sha는 기존 파일을 덮어쓸 때 필요하다. 그사이 다른 사람이 저장했다면 409가 난다.
     async writeFile(path, { base64, message, sha }) {
       const result = await request(`${repoUrl}/contents/${encodePath(path)}`, {
