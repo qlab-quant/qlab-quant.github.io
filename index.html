@@ -13,6 +13,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/theme.js"></script>
 </head>
 <body>
   <header class="site-header" id="site-header">
@@ -28,6 +29,7 @@
         <a href="#recruit">모집</a>
         <a href="#notice">공지</a>
       </nav>
+      <button class="theme-btn" type="button" data-theme-toggle></button>
       <button class="menu-btn" id="menu-btn" aria-label="메뉴 열기" aria-expanded="false" aria-controls="nav">
         <span></span><span></span>
       </button>
@@ -165,10 +167,14 @@
       </div>
       <ul class="contact-list" id="contact-list"></ul>
     </div>
-    <div class="container">
+    <div class="container footer-bottom">
       <p class="copyright" id="copyright"></p>
+      <a class="admin-link" href="admin.html">관리자</a>
     </div>
   </footer>
+
+  <!-- 관리 페이지에 로그인한 운영진에게만 보인다 -->
+  <a class="admin-fab" id="admin-fab" href="admin.html" hidden>관리 페이지 ↗</a>
 
   <!-- 내용은 관리 페이지(admin.html) 또는 js/data.js에서 수정하세요. data.js는 main.js가 불러옵니다. -->
   <script src="js/main.js"></script>

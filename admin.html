@@ -14,10 +14,12 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/admin.css" />
+  <script src="js/theme.js"></script>
 </head>
 <body class="admin">
   <!-- 로그인 -->
   <section class="login" id="login-view">
+    <button class="theme-btn login-theme" type="button" data-theme-toggle></button>
     <form class="login-card" id="login-form" novalidate>
       <a href="./" class="logo" aria-label="Q-Lab 홈">
         <span class="logo-mark">Q</span><span class="logo-text">Lab</span>
@@ -45,7 +47,7 @@
           </div>
           <div class="field half">
             <label class="field-label" for="repo-name">저장소 이름</label>
-            <input class="input" type="text" id="repo-name" spellcheck="false" placeholder="Q-lab-wabpage" />
+            <input class="input" type="text" id="repo-name" spellcheck="false" placeholder="qlab-quant.github.io" />
           </div>
           <div class="field half">
             <label class="field-label" for="repo-branch">브랜치</label>
@@ -69,7 +71,8 @@
   <div class="app" id="app-view" hidden>
     <header class="admin-header">
       <div class="admin-header-inner">
-        <a href="./" class="logo" aria-label="Q-Lab 홈">
+        <!-- 로고를 눌러도 관리 화면에 머문다. 사이트는 '사이트 보기'로 새 탭에서 연다. -->
+        <a href="admin.html" class="logo" id="admin-logo" aria-label="관리 화면 처음으로">
           <span class="logo-mark">Q</span><span class="logo-text">Lab</span>
         </a>
         <span class="admin-tag">관리자</span>
@@ -77,6 +80,7 @@
           <span class="admin-user" id="admin-user"></span>
           <a class="header-link" href="./" target="_blank" rel="noopener">사이트 보기 ↗</a>
           <button class="header-link" type="button" id="logout-btn">로그아웃</button>
+          <button class="theme-btn" type="button" data-theme-toggle></button>
         </div>
       </div>
     </header>

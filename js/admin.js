@@ -673,6 +673,10 @@ $("#save-btn").addEventListener("click", save);
 $("#revert-btn").addEventListener("click", revert);
 $("#preview-btn").addEventListener("click", openPreview);
 $("#logout-btn").addEventListener("click", logout);
+$("#admin-logo").addEventListener("click", (e) => {
+  e.preventDefault();
+  selectSection(ADMIN_SECTIONS[0].id);
+});
 
 document.addEventListener("keydown", (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s" && state.data) {

@@ -21,7 +21,7 @@
 }
 
 .btn-primary:disabled:hover {
-  background: var(--text);
+  background: var(--strong);
 }
 
 .btn-ghost:disabled:hover {
@@ -67,7 +67,7 @@
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 10px;
-  background: var(--bg);
+  background: var(--surface);
   color: var(--text);
   font: inherit;
   font-size: 15px;
@@ -80,7 +80,7 @@ textarea.input {
 }
 
 .input::placeholder {
-  color: #b3b8bf;
+  color: var(--placeholder);
 }
 
 .input:focus {
@@ -100,10 +100,17 @@ select.input {
 
 /* ─────────────── 로그인 ─────────────── */
 .login {
+  position: relative;
   display: grid;
   place-items: center;
   min-height: 100vh;
   padding: 24px 16px;
+}
+
+.login-theme {
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 
 .login-card {
@@ -114,7 +121,7 @@ select.input {
   padding: 36px 32px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--bg);
+  background: var(--surface);
 }
 
 .login-card .logo {
@@ -172,8 +179,8 @@ select.input {
 .login-error {
   padding: 10px 12px;
   border-radius: 10px;
-  background: #fdeeec;
-  color: #b42318;
+  background: var(--danger-soft);
+  color: var(--danger);
   font-size: 14px;
 }
 
@@ -288,11 +295,11 @@ select.input {
 
 .nav-item:hover {
   color: var(--text);
-  background: var(--bg);
+  background: var(--surface);
 }
 
 .nav-item[aria-current="page"] {
-  background: var(--bg);
+  background: var(--surface);
   color: var(--text);
   font-weight: 600;
   box-shadow: 0 0 0 1px var(--line);
@@ -329,7 +336,7 @@ select.input {
   padding: 28px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--bg);
+  background: var(--surface);
 }
 
 /* ─────────────── 목록 ─────────────── */
@@ -367,12 +374,12 @@ select.input {
 .item {
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: var(--bg);
+  background: var(--surface);
   transition: border-color 0.15s;
 }
 
 .item[open] {
-  border-color: #cfd3da;
+  border-color: var(--line-strong);
 }
 
 .item summary {
@@ -435,8 +442,8 @@ select.input {
 }
 
 .icon-btn.danger:hover:not(:disabled) {
-  background: #fdeeec;
-  color: #b42318;
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .icon-btn:disabled {
@@ -508,7 +515,7 @@ select.input {
   bottom: 0;
   z-index: 30;
   border-top: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.92);
+  background: var(--header-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -553,8 +560,8 @@ select.input {
   max-width: min(560px, calc(100% - 32px));
   padding: 12px 18px;
   border-radius: 12px;
-  background: var(--text);
-  color: #fff;
+  background: var(--strong);
+  color: var(--on-strong);
   font-size: 14px;
   opacity: 0;
   pointer-events: none;
@@ -568,7 +575,7 @@ select.input {
 }
 
 .toast[data-type="error"] {
-  background: #b42318;
+  background: var(--danger);
 }
 
 /* ─────────────── 반응형 ─────────────── */
@@ -578,6 +585,14 @@ select.input {
   }
 
   .admin-user {
+    display: none;
+  }
+
+  .admin-header-right {
+    gap: 12px;
+  }
+
+  .admin-tag {
     display: none;
   }
 

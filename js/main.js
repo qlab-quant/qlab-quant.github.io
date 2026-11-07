@@ -272,6 +272,14 @@ function renderFooter() {
   $("#copyright").textContent = `© ${new Date().getFullYear()} ${DATA.site.name}. All rights reserved.`;
 }
 
+// 관리 페이지에 로그인한 상태면 돌아가는 버튼을 보여 준다 (토큰 값은 읽지 않고 있는지만 본다)
+function showAdminShortcut() {
+  try {
+    const key = "qlab-admin-token";
+    $("#admin-fab").hidden = !(sessionStorage.getItem(key) || localStorage.getItem(key));
+  } catch {}
+}
+
 function renderPreviewBanner() {
   const banner = document.createElement("div");
   banner.className = "preview-banner";
@@ -316,6 +324,7 @@ function setupNav() {
 async function start() {
   setupNav();
   renderHeroChart();
+  if (!isPreview) showAdminShortcut();
 
   const preview = isPreview && readPreviewData();
   if (!preview) await loadScript(`js/data.js?v=${Date.now()}`);
