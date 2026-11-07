@@ -103,6 +103,7 @@ function renderBindings() {
 
 /* ── 히어로 차트 (장식용 랜덤워크, 카드 너비에 맞춰 다시 그린다) ── */
 let chartWidth = 0;
+let chart = null; // 십자선이 쓰는 점 좌표와 지수 값
 
 function renderHeroChart() {
   const svg = $("#hero-chart");
@@ -137,6 +138,9 @@ function renderHeroChart() {
     .map((i) => `<line x1="0" x2="${W}" y1="${(H / 4) * i}" y2="${(H / 4) * i}" />`)
     .join("");
 
+  // 장식용 지수: 시작을 100으로 두고 움직임을 키운 값
+  chart = { pts, values: series.map((s) => 100 + (s - series[0]) * 1.8) };
+
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   svg.innerHTML = `
     <defs>
@@ -148,7 +152,46 @@ function renderHeroChart() {
       <path class="chart-line" d="${line}" />
     </g>
     <circle class="chart-dot" cx="${lastX}" cy="${lastY}" r="5" />
+    <line class="chart-cross" y1="0" y2="${H}" />
+    <circle class="chart-hover-dot" r="5" />
   `;
+}
+
+// 차트 위에 마우스(또는 손가락)를 올리면 가장 가까운 점에 십자선과 값이 따라붙는다
+function setupChartHover() {
+  const svg = $("#hero-chart");
+  const wrap = svg.closest(".chart-wrap");
+  const tip = $("#chart-tip");
+
+  const show = (e) => {
+    if (!chart) return;
+    const r = svg.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    let i = 0;
+    chart.pts.forEach(([px], k) => {
+      if (Math.abs(px - x) < Math.abs(chart.pts[i][0] - x)) i = k;
+    });
+    const [px, py] = chart.pts[i];
+    const cross = svg.querySelector(".chart-cross");
+    cross.setAttribute("x1", px);
+    cross.setAttribute("x2", px);
+    const dot = svg.querySelector(".chart-hover-dot");
+    dot.setAttribute("cx", px);
+    dot.setAttribute("cy", py);
+
+    tip.textContent = `T+${i}  ${chart.values[i].toFixed(2)}`;
+    const w = wrap.getBoundingClientRect();
+    const left = r.left - w.left + px;
+    const top = r.top - w.top + py;
+    const tx = Math.min(Math.max(left - tip.offsetWidth / 2, 0), w.width - tip.offsetWidth);
+    const ty = top - tip.offsetHeight - 12 < 0 ? top + 12 : top - tip.offsetHeight - 12;
+    tip.style.transform = `translate(${tx}px, ${ty}px)`;
+    wrap.classList.add("chart-hover");
+  };
+
+  svg.addEventListener("pointermove", show);
+  svg.addEventListener("pointerdown", show);
+  svg.addEventListener("pointerleave", () => wrap.classList.remove("chart-hover"));
 }
 
 /* ── 통계 ── */
@@ -200,7 +243,7 @@ const VALUE_ICONS = ["books", "code", "chart-line-up", "users-three", "lightbulb
 function renderAbout() {
   $("#about-body").innerHTML = (DATA.about.paragraphs ?? []).map((p) => `<p>${multiline(p)}</p>`).join("");
   $("#values").innerHTML = listHtml(DATA.about.values, (v, i) => `
-    <li class="value">
+    <li class="value spotlight">
       <span class="value-icon">${icon(VALUE_ICONS[i % VALUE_ICONS.length])}</span>
       <div>
         <h3>${esc(v.title)}</h3>
@@ -212,7 +255,7 @@ function renderAbout() {
 /* ── 활동 ── */
 function renderActivities() {
   $("#activity-list").innerHTML = listHtml(DATA.activities, (a, i) => `
-    <li class="card">
+    <li class="card spotlight">
       <div class="card-head">
         <span class="card-tag">${esc(a.cycle)}</span>
         <span class="card-num">${pad2(i + 1)}</span>
@@ -250,7 +293,7 @@ function renderMembers() {
       ? `<img src="${esc(photo)}" alt="${esc(m.name)} 사진" loading="lazy" />`
       : `<span>${esc(m.name.charAt(0))}</span>`;
     return `
-      <li class="member">
+      <li class="member spotlight">
         <div class="avatar">${avatar}</div>
         <div>
           <p class="member-role">${esc(m.role)}</p>
@@ -437,6 +480,7 @@ async function start() {
   setupNav();
   setupReveal();
   renderHeroChart();
+  setupChartHover();
   addEventListener("resize", () => requestAnimationFrame(renderHeroChart));
   if (!isPreview) showAdminShortcut();
 
