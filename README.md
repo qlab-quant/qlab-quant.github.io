@@ -28,7 +28,8 @@ js/gallery.js         갤러리 화면
 js/gallery-api.js     갤러리 ↔ Supabase 연결
 js/gallery-config.js  갤러리가 쓰는 Supabase 주소와 공개 키
 js/gallery-mock.js    내 컴퓨터에서 갤러리를 시험해 보는 가짜 서버 (gallery.html?mock)
-js/hero.js            첫 화면 지구본 (수식 · 코드 입자가 수익률 그래프로 바뀜)
+js/hero.js            첫 화면 수식 지구본과 스크롤 서사 (수식 → 구조 → 데이터 → 전략)
+js/backdrop.js        홈 배경 네트워크 (보고 있는 섹션에 따라 모양이 바뀜)
 js/icons.js           직접 그린 아이콘과 동아리 로고
 js/effects.js         마우스 효과 (돋보기는 홈에서만, 카드 빛, 자석 버튼)
 js/theme.js           화면 모드(시스템 · 라이트 · 다크) 전환
@@ -45,7 +46,8 @@ favicon.svg           브라우저 탭 아이콘 (로고 엠블럼)
 디자인은 [elayadesign/ai-design-skills](https://github.com/elayadesign/ai-design-skills)의 `landing-page-design` 시각 규칙을 따릅니다. 색 · 글자 크기 · 간격 · 곡률 · 움직임 값은 `css/style.css` 맨 위 토큰에만 정의되어 있으니, 새 스타일을 만들 때도 숫자를 직접 쓰지 말고 토큰(`var(--s-300)`, `var(--heading-3)` 등)을 써 주세요.
 
 ```
-글꼴     Geist (한글은 Pretendard), 숫자는 Geist Mono
+글꼴     제목 Space Grotesk · 본문 Inter · 숫자와 수식 IBM Plex Mono (한글은 모두 Pretendard)
+색       다크 기본: 배경 #090B10 · 면 #121722 · 글자 #F4F7FB · 파랑 #2F6BFF · 청록 #59D0FF
 아이콘   js/icons.js에 직접 그린 선 아이콘 (24px 격자, 1.5px 선)
 로고     images/logo/ 의 동아리 로고, 남색 #0e1e35 (다크 모드에서는 흰색)
 간격     2 · 4 · 8 · 12 · 16 · 24 · 32 · 40 · 48 · 64 · 80 · 96px 만 사용

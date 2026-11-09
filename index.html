@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Q-Lab | 퀀트 투자 동아리</title>
   <meta name="description" content="돈을 지키는 법을 연구하는 퀀트 투자 동아리 Q-Lab입니다." />
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#090b10" />
   <link rel="canonical" href="https://qlab-quant.github.io/" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Q-Lab" />
@@ -20,11 +19,11 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
-  <link rel="stylesheet" href="css/style.css?v=202611072152" />
-  <script src="js/theme.js?v=202611072152"></script>
-  <script src="js/icons.js?v=202611072152"></script>
+  <link rel="stylesheet" href="css/style.css?v=202611091644" />
+  <script src="js/theme.js?v=202611091644"></script>
+  <script src="js/icons.js?v=202611091644"></script>
 </head>
 <body data-page="home">
   <a class="skip-link" href="#main">본문으로 건너뛰기</a>
@@ -34,25 +33,68 @@
   <div class="mobile-menu" id="mobile-menu" inert></div>
 
   <main id="main">
-    <!-- 히어로: 수식과 코드가 모인 지구본 → 스크롤하면 수익률 그래프 (js/hero.js) -->
+    <!-- 히어로: 수식 지구본 → 스크롤하면 수식 · 구조 · 데이터 · 전략 네 장면으로 바뀐다 (js/hero.js) -->
     <section class="hero" id="top">
       <div class="hero-stage stage" id="hero-stage" data-lens-sticky>
+        <div class="hero-grid" aria-hidden="true"></div>
         <canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
         <div class="container hero-inner">
-          <p class="eyebrow" data-bind="eyebrow"></p>
-          <h1 class="hero-title" data-bind="tagline"></h1>
-          <p class="hero-sub" data-bind="description"></p>
-          <div class="hero-actions">
-            <a class="btn btn-primary hero-cta" href="recruit.html" data-cta data-magnetic>지원하기</a>
+          <div class="hero-copy" id="hero-copy">
+            <p class="hero-kicker">
+              <span class="live-dot" aria-hidden="true"></span>
+              <span>Quant Research Society</span>
+              <span class="hero-kicker-sep" aria-hidden="true">/</span>
+              <span data-bind="university"></span>
+            </p>
+            <h1 class="hero-title">
+              <span class="hero-headline" id="hero-headline"></span>
+              <span class="hero-motto" data-bind="tagline"></span>
+            </h1>
+            <p class="hero-sub" data-bind="description"></p>
+            <div class="hero-actions">
+              <a class="btn btn-primary btn-lg" href="recruit.html" data-cta data-magnetic>Q-LAB 합류하기</a>
+              <a class="btn btn-ghost btn-lg" href="#projects">프로젝트 보기 <span data-icon="arrow-right"></span></a>
+            </div>
             <p class="hero-note" id="hero-note"></p>
           </div>
+
+          <!-- 스크롤 서사: 추상 수학 → 구조 → 데이터 → 전략 -->
+          <ol class="hero-chapters" id="hero-chapters">
+            <li>
+              <span class="chapter-index">01 &mdash; Equation</span>
+              <p class="chapter-title">시장은 수식으로 읽습니다.</p>
+              <p class="chapter-text">가격과 위험, 수익을 확률과 기대값의 언어로 다시 씁니다.</p>
+            </li>
+            <li>
+              <span class="chapter-index">02 &mdash; Structure</span>
+              <p class="chapter-title">가설에 구조를 세웁니다.</p>
+              <p class="chapter-text">흩어진 아이디어를 검증할 수 있는 행렬과 규칙으로 정리합니다.</p>
+            </li>
+            <li>
+              <span class="chapter-index">03 &mdash; Data</span>
+              <p class="chapter-title">수식을 데이터로 분해합니다.</p>
+              <p class="chapter-text">실제 시장 데이터 위에서 가설을 하나씩 백테스트합니다.</p>
+            </li>
+            <li>
+              <span class="chapter-index">04 &mdash; Strategy</span>
+              <p class="chapter-title">검증을 통과한 것만 전략이 됩니다.</p>
+              <p class="chapter-text">거래비용과 낙폭까지 견딘 신호만 남깁니다. 돈을 지키는 법은 거기서 시작합니다.</p>
+            </li>
+          </ol>
+        </div>
+
+        <div class="hero-progress" id="hero-progress" aria-hidden="true">
+          <span class="hero-progress-label" id="hero-progress-label">00</span>
+          <span class="hero-progress-bar"><span></span></span>
+          <span class="hero-progress-label">04</span>
         </div>
         <p class="hero-chart-label" id="hero-chart-label" aria-hidden="true">
-          <span>Q-LAB INDEX</span><span>since founded</span>
+          <span>Strategy equity</span><span>illustrative</span>
         </p>
         <p class="hero-hint" id="hero-hint" aria-hidden="true">
-          스크롤하면 수식이 그래프로 바뀌어요 <span data-icon="arrow-right"></span>
+          스크롤해서 수식이 전략이 되는 과정을 보세요 <span data-icon="arrow-right"></span>
         </p>
+        <div class="hero-ticker" aria-hidden="true"><div class="ticker-track" id="ticker-track"></div></div>
       </div>
     </section>
 
@@ -63,9 +105,10 @@
       </div>
     </section>
 
-    <!-- 큰 문구: 스크롤하면 단어가 하나씩 켜진다 -->
+    <!-- 선언문: 스크롤하면 단어가 하나씩 켜진다 -->
     <section class="tagline-section" aria-label="Q-Lab이 하는 일">
       <div class="container">
+        <p class="section-kicker tagline-kicker"><span class="section-num">00</span><span>Manifesto</span></p>
         <p class="tagline" id="tagline"></p>
       </div>
     </section>
@@ -74,49 +117,48 @@
     <section class="section section-soft" id="about">
       <div class="container" data-reveal>
         <header class="section-head">
-          <span class="section-num">01</span>
-          <h2>소개</h2>
+          <p class="section-kicker"><span class="section-num">01</span><span>About</span><span class="section-ko">소개</span></p>
+          <h2>동아리지만,<br />리서치 랩처럼 일합니다.</h2>
         </header>
-        <div class="about-grid">
-          <div class="about-body" id="about-body"></div>
-          <ul class="values" id="values"></ul>
-        </div>
+        <div class="about-body" id="about-body"></div>
+        <ul class="principles" id="values" data-stagger></ul>
       </div>
     </section>
 
-    <!-- 02 활동 -->
+    <!-- 02 활동: 한 학기의 흐름을 타임라인처럼 -->
     <section class="section" id="activities">
       <div class="container" data-reveal>
         <header class="section-head">
-          <span class="section-num">02</span>
-          <h2>활동</h2>
-          <p>한 학기 동안 이런 활동을 함께합니다.</p>
+          <p class="section-kicker"><span class="section-num">02</span><span>Process</span><span class="section-ko">활동</span></p>
+          <h2>읽고, 만들고, 검증합니다.</h2>
+          <p>한 학기 동안 이런 흐름으로 함께 연구합니다.</p>
         </header>
-        <ul class="card-grid" id="activity-list"></ul>
+        <ol class="process" id="activity-list" data-stagger></ol>
       </div>
     </section>
 
-    <!-- 03 프로젝트 -->
+    <!-- 03 프로젝트: 연구 성과처럼 (미리보기 차트 + 요약 + 검증 포인트) -->
     <section class="section section-soft" id="projects">
       <div class="container" data-reveal>
         <header class="section-head">
-          <span class="section-num">03</span>
-          <h2>프로젝트</h2>
+          <p class="section-kicker"><span class="section-num">03</span><span>Research</span><span class="section-ko">프로젝트</span></p>
+          <h2>가설에서 검증까지,<br />연구 기록</h2>
           <p>부원들이 직접 리서치하고 검증한 결과물입니다.</p>
         </header>
-        <ul class="project-list" id="project-list"></ul>
+        <ul class="project-grid" id="project-list" data-stagger></ul>
+        <a class="btn btn-ghost project-more" href="research.html">리서치 전체 보기 <span data-icon="arrow-right"></span></a>
       </div>
     </section>
 
-    <!-- 04 멤버 -->
+    <!-- 04 멤버: 역할(트랙)이 보이게 -->
     <section class="section" id="members">
       <div class="container" data-reveal>
         <header class="section-head">
-          <span class="section-num">04</span>
-          <h2>멤버</h2>
+          <p class="section-kicker"><span class="section-num">04</span><span>Team</span><span class="section-ko">멤버</span></p>
+          <h2>리서치 · 엔지니어링 · 운영이<br />한 팀으로</h2>
           <p data-bind="memberTerm"></p>
         </header>
-        <ul class="member-grid" id="member-list"></ul>
+        <ul class="member-grid" id="member-list" data-stagger></ul>
       </div>
     </section>
 
@@ -124,11 +166,11 @@
     <section class="section section-soft" id="videos" hidden>
       <div class="container" data-reveal>
         <header class="section-head">
-          <span class="section-num">05</span>
-          <h2>영상</h2>
+          <p class="section-kicker"><span class="section-num">05</span><span>Media</span><span class="section-ko">영상</span></p>
+          <h2>세미나와 발표를 영상으로</h2>
           <p>세미나와 활동 영상을 유튜브에 올리고 있어요.</p>
         </header>
-        <ul class="video-grid" id="video-list"></ul>
+        <ul class="video-grid" id="video-list" data-stagger></ul>
         <a class="btn btn-ghost youtube-link" id="youtube-link" target="_blank" rel="noopener" hidden>
           <span data-icon="youtube-logo"></span> 유튜브 채널 보기
         </a>
@@ -139,10 +181,14 @@
     <section class="cta-section">
       <div class="container">
         <div class="cta-card spotlight" data-reveal>
+          <p class="section-kicker"><span class="live-dot" aria-hidden="true"></span><span>Join Q-LAB</span></p>
           <span class="badge" id="cta-badge"></span>
           <h2 id="cta-title"></h2>
-          <p id="cta-period"></p>
-          <a class="btn btn-primary" href="recruit.html" data-cta data-magnetic>지원하기</a>
+          <p class="cta-period" id="cta-period"></p>
+          <div class="cta-actions">
+            <a class="btn btn-primary btn-lg" href="recruit.html" data-cta data-magnetic>Q-LAB 합류하기</a>
+            <a class="btn btn-ghost btn-lg" href="notice.html">공지 보기 <span data-icon="arrow-right"></span></a>
+          </div>
         </div>
       </div>
     </section>
@@ -151,9 +197,10 @@
   <footer class="site-footer" id="site-footer"></footer>
 
   <!-- 내용은 관리 페이지(admin.html) 또는 js/data.js에서 수정하세요. data.js는 main.js가 불러옵니다. -->
-  <script src="js/common.js?v=202611072152"></script>
-  <script src="js/hero.js?v=202611072152"></script>
-  <script src="js/main.js?v=202611072152"></script>
-  <script src="js/effects.js?v=202611072152"></script>
+  <script src="js/common.js?v=202611091644"></script>
+  <script src="js/backdrop.js?v=202611091644"></script>
+  <script src="js/hero.js?v=202611091644"></script>
+  <script src="js/main.js?v=202611091644"></script>
+  <script src="js/effects.js?v=202611091644"></script>
 </body>
 </html>

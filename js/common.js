@@ -72,9 +72,9 @@ const recruitStatus = (data) => RECRUIT_STATUS[data.recruit.status] ?? RECRUIT_S
 function ctaInfo(data) {
   const applyUrl = safeUrl(data.recruit.applyUrl);
   if (data.recruit.status === "open" && applyUrl) {
-    return { label: "지원서 작성하기", href: applyUrl, external: true };
+    return { label: "지금 지원하기", href: applyUrl, external: true };
   }
-  const label = data.recruit.status === "upcoming" ? "모집 일정 보기" : "모집 안내 보기";
+  const label = data.recruit.status === "upcoming" ? "Q-LAB 합류하기" : "모집 안내 보기";
   return { label, href: pageUrl("recruit.html"), external: false };
 }
 
