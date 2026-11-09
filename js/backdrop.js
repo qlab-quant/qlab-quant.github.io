@@ -19,7 +19,9 @@
   const palette = () => (getComputedStyle(document.documentElement).colorScheme.includes("dark") ? COLORS.dark : COLORS.light);
   let colors = palette();
 
-  let W = 0, H = 0, dpr = 1;
+  let W = 0, H = 0;
+  let heroEnd = 0; // 첫 화면이 끝나는 문서 위치 (스크롤할 때마다 레이아웃을 읽지 않으려고 미리 잰다)
+  const FRAME_MS = 1000 / 30; // 아주 천천히 움직이므로 초당 30번이면 충분하다
   let seed = 5;
   const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   const lerp = (a, b, t) => a + (b - a) * t;
@@ -71,14 +73,15 @@
   const SECTION_MODE = { about: "globe", activities: "timeline", projects: "regression", members: "clusters", videos: "wave" };
   let mode = "globe";
 
+  // 옅은 배경이라 레티나에서도 1배 해상도로 그린다 (칠할 픽셀이 1/4로 준다)
   function resize() {
     W = innerWidth;
     H = innerHeight;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(W * dpr);
-    canvas.height = Math.round(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    canvas.width = W;
+    canvas.height = H;
+    heroEnd = hero ? hero.offsetTop + hero.offsetHeight : 0;
   }
+  const heroBottom = () => heroEnd - window.scrollY;
 
   const pointer = { x: -1e4, y: -1e4 };
   addEventListener("pointermove", (e) => {
@@ -107,16 +110,20 @@
     ctx.stroke();
   }
 
-  let start = 0, frameId = 0, visible = false, settle = 0;
+  let start = 0, frameId = 0, visible = false, settle = 0, drawn = 0;
 
   function frame(now) {
     frameId = 0;
     if (!start) start = now;
+    if (!reduce && now - drawn < FRAME_MS - 2) {
+      if (visible) frameId = requestAnimationFrame(frame);
+      return;
+    }
+    drawn = now;
     const t = reduce ? 0 : (now - start) / 1000;
     ctx.clearRect(0, 0, W, H);
     // 첫 화면이 사라지는 동안 서서히 나타난다
-    const heroBottom = hero ? hero.getBoundingClientRect().bottom : 0;
-    const fade = Math.min(1, Math.max(0, 1 - (heroBottom - H * 0.3) / (H * 0.7)));
+    const fade = Math.min(1, Math.max(0, 1 - (heroBottom() - H * 0.3) / (H * 0.7)));
     if (fade <= 0) {
       if (visible && !reduce) frameId = requestAnimationFrame(frame);
       return;
@@ -136,24 +143,28 @@
 
     guide(t, fade);
 
-    // 가까운 노드끼리 잇는다 (멀수록 옅게)
+    // 가까운 노드끼리 잇는다 (멀수록 옅게). 선마다 긋지 않고 밝기 네 단계로 묶어 네 번만 긋는다
     const maxD = Math.min(W, H) * (mode === "globe" ? 0.11 : 0.14);
+    const maxD2 = maxD * maxD;
     const linkList = [];
-    ctx.lineWidth = 1;
+    const tiers = [new Path2D(), new Path2D(), new Path2D(), new Path2D()];
     for (let i = 0; i < N; i++) {
       for (let j = i + 1; j < N; j++) {
         const dx = nodes[i].x - nodes[j].x, dy = nodes[i].y - nodes[j].y;
-        const d = Math.hypot(dx, dy);
-        if (d > maxD) continue;
+        const d2 = dx * dx + dy * dy;
+        if (d2 > maxD2) continue;
         linkList.push([i, j]);
-        const a = (1 - d / maxD) * 0.14 * fade * Math.min(depth[i], depth[j]);
-        ctx.strokeStyle = `rgba(${colors.link}, ${a})`;
-        ctx.beginPath();
-        ctx.moveTo(nodes[i].x, nodes[i].y);
-        ctx.lineTo(nodes[j].x, nodes[j].y);
-        ctx.stroke();
+        const strength = (1 - Math.sqrt(d2) / maxD) * Math.min(depth[i], depth[j]);
+        const path = tiers[Math.min(3, Math.floor(strength * 4))];
+        path.moveTo(nodes[i].x, nodes[i].y);
+        path.lineTo(nodes[j].x, nodes[j].y);
       }
     }
+    ctx.lineWidth = 1;
+    tiers.forEach((path, i) => {
+      ctx.strokeStyle = `rgba(${colors.link}, ${(0.14 * fade * (i + 0.5)) / 4})`;
+      ctx.stroke(path);
+    });
 
     // 노드: 마우스 가까이에서 밝아진다
     nodes.forEach((n, i) => {
@@ -167,7 +178,7 @@
     // 연결선을 따라 오가는 신호
     if (linkList.length && !reduce) {
       pulses.forEach((p) => {
-        p.t += 0.012;
+        p.t += 0.024;
         if (p.t > 1 || !nodes[p.a] || Math.hypot(nodes[p.a].x - nodes[p.b].x, nodes[p.a].y - nodes[p.b].y) > maxD * 1.2) {
           const [a, b] = linkList[Math.floor(Math.random() * linkList.length)];
           Object.assign(p, { a, b, t: 0 });
@@ -212,11 +223,11 @@
   // 첫 화면 아래가 보일 때만 움직인다
   addEventListener("scroll", () => {
     const wasVisible = visible;
-    visible = !document.hidden && (!hero || hero.getBoundingClientRect().bottom < H * 1.0);
+    visible = !document.hidden && heroBottom() < H;
     if (visible && !wasVisible) play();
   }, { passive: true });
   document.addEventListener("visibilitychange", () => {
-    visible = !document.hidden && (!hero || hero.getBoundingClientRect().bottom < H);
+    visible = !document.hidden && heroBottom() < H;
     if (visible) play();
   });
 
@@ -232,6 +243,9 @@
     play();
   });
   resize();
-  visible = !hero || hero.getBoundingClientRect().bottom < H;
+  // 글꼴 · 내용이 늦게 들어와 첫 화면 길이가 바뀔 수 있으니 한 번 더 잰다
+  addEventListener("load", resize);
+  new ResizeObserver(resize).observe(document.body);
+  visible = heroBottom() < H;
   play();
 })();

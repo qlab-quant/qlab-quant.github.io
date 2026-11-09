@@ -47,8 +47,6 @@
       dot: "#bfd3ff",
       grid: "148, 163, 184",
       net: "89, 208, 255",
-      glow: "47, 107, 255",
-      glowA: 0.22,
       blue: "#2f6bff",
       cyan: "#59d0ff",
       bench: "148, 163, 184",
@@ -60,8 +58,6 @@
       dot: "#1e3a8a",
       grid: "71, 85, 105",
       net: "10, 143, 196",
-      glow: "47, 107, 255",
-      glowA: 0.12,
       blue: "#2f6bff",
       cyan: "#0a8fc4",
       bench: "100, 116, 139",
@@ -80,18 +76,32 @@
   const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
   const span = (p, from, len) => ease(clamp01((p - from) / len));
 
-  let W = 0, H = 0, dpr = 1;
+  let W = 0, H = 0;
+  // 작은 그림(글자 · 차트)은 이 해상도로 한 번만 만들어 둔다
+  const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+  // 캔버스 해상도: 레티나에서도 1.5배까지만. 프레임이 밀리면 스스로 낮추고, 여유가 생기면 한 단계씩 올린다
+  const SCALES = [0.75, 1, 1.25, 1.5].filter((v) => v <= dpr + 0.01);
+  let level = SCALES.length - 1;
+  let scale = SCALES[level];
+  // 처음에는 칠할 픽셀이 220만 개를 넘지 않는 해상도로 시작한다 (큰 화면 · 레티나에서 첫 몇 초가 끊기지 않게)
+  function startLevel(w, h) {
+    let i = SCALES.length - 1;
+    while (i > 0 && w * h * SCALES[i] * SCALES[i] > 2.2e6) i--;
+    return i;
+  }
   let globe = { x: 0, y: 0, r: 0 };
   let region = { x0: 0, x1: 0, y0: 0, y1: 0 };
   let matrix = { x0: 0, x1: 0, y0: 0, y1: 0 };
 
   /* ── 미리 그려 두는 작은 그림 (매 프레임 붙이기만 한다) ── */
   const sprites = new Map();
+  let spriteBudget = Infinity; // 이번 프레임에 새로 만들 수 있는 작은 그림 수
 
   function textSprite(text, color, size) {
     const key = `t|${text}|${color}|${size}|${dpr}`;
     let img = sprites.get(key);
     if (img) return img;
+    if (spriteBudget-- <= 0) return null;
     img = document.createElement("canvas");
     const g = img.getContext("2d");
     const font = `500 ${size * dpr}px "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace`;
@@ -111,6 +121,7 @@
     const key = `m|${type}|${color}|${accent}|${dpr}`;
     let img = sprites.get(key);
     if (img) return img;
+    if (spriteBudget-- <= 0) return null;
     img = document.createElement("canvas");
     img.width = 52 * dpr;
     img.height = 32 * dpr;
@@ -344,6 +355,13 @@
   };
 
   /* ── 화면 크기에 맞춘 자리 잡기 ── */
+  let heroTop = 0, heroSpan = 1;
+
+  function resizeCanvas() {
+    canvas.width = Math.round(W * scale);
+    canvas.height = Math.round(H * scale);
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  }
   let peaks = [];
   let constellation = [];
   let constLinks = [];
@@ -351,11 +369,14 @@
   function layout() {
     W = stage.clientWidth;
     H = stage.clientHeight;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(W * dpr);
-    canvas.height = Math.round(H * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    sprites.clear();
+    if (!perf.started) {
+      perf.started = true;
+      level = startLevel(W, H);
+      scale = SCALES[level];
+    }
+    resizeCanvas();
+    heroTop = hero.offsetTop;
+    heroSpan = hero.offsetHeight - H;
 
     // 휴대폰이나 세로로 세운 태블릿은 글 아래에 지구본을 쌓는다
     const narrow = W < 720 || W < H * 0.9;
@@ -452,9 +473,7 @@
 
   // 스크롤이 히어로 구간에서 어디까지 왔는지 (0 = 맨 위, 1 = 끝)
   function scrollProgress() {
-    const r = hero.getBoundingClientRect();
-    const total = r.height - H;
-    return total > 0 ? clamp01(-r.top / total) : 0;
+    return heroSpan > 0 ? clamp01((window.scrollY - heroTop) / heroSpan) : 0;
   }
 
   const pointer = { x: 0, y: 0, tx: 0, ty: 0, px: -1e4, py: -1e4 };
@@ -484,18 +503,6 @@
   };
 
   /* ── 레이어 그리기 ── */
-  function drawGlow(alpha) {
-    if (alpha <= 0) return;
-    const r = globe.r * 1.9;
-    const g = ctx.createRadialGradient(gx0, gy0, 0, gx0, gy0, r);
-    g.addColorStop(0, `rgba(${theme.glow}, ${theme.glowA})`);
-    g.addColorStop(0.5, `rgba(${theme.glow}, ${theme.glowA / 4})`);
-    g.addColorStop(1, `rgba(${theme.glow}, 0)`);
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = g;
-    ctx.fillRect(gx0 - r, gy0 - r, r * 2, r * 2);
-  }
-
   function drawGraticule(alpha) {
     if (alpha <= 0) return;
     const front = new Path2D();
@@ -522,20 +529,23 @@
 
   function drawRing(alpha, t) {
     if (alpha <= 0) return;
-    ctx.lineWidth = 1.4;
     const spin = t * 0.08;
+    const paths = [new Path2D(), new Path2D(), new Path2D(), new Path2D()]; // [파랑 뒤, 파랑 앞, 청록 뒤, 청록 앞]
     for (const b of ring) {
       const a = b.a + spin;
       const live = b.h * (0.8 + 0.2 * Math.sin(t * 1.6 + b.a * 5));
       const inner = project(rotate(Math.cos(a) * 1.16, 0, Math.sin(a) * 1.16));
       const outer = project(rotate(Math.cos(a) * (1.16 + live), 0, Math.sin(a) * (1.16 + live)));
-      ctx.globalAlpha = alpha * (0.12 + 0.6 * inner[3] * inner[3]);
-      ctx.strokeStyle = b.h > 0.12 ? theme.cyan : theme.blue;
-      ctx.beginPath();
-      ctx.moveTo(inner[0], inner[1]);
-      ctx.lineTo(outer[0], outer[1]);
-      ctx.stroke();
+      const path = paths[(b.h > 0.12 ? 2 : 0) + (inner[3] > 0.5 ? 1 : 0)];
+      path.moveTo(inner[0], inner[1]);
+      path.lineTo(outer[0], outer[1]);
     }
+    ctx.lineWidth = 1.4;
+    paths.forEach((path, i) => {
+      ctx.globalAlpha = alpha * (i % 2 ? 0.6 : 0.14);
+      ctx.strokeStyle = i < 2 ? theme.blue : theme.cyan;
+      ctx.stroke(path);
+    });
   }
 
   // 두 단위벡터 사이 대원 위의 점 (구면 선형 보간)
@@ -550,20 +560,24 @@
 
   function drawNetwork(alpha, t, dt) {
     if (alpha <= 0) return;
+    const tiers = [new Path2D(), new Path2D(), new Path2D()]; // 뒤 · 가운데 · 앞
+    for (const [i, j] of links) {
+      const pts = [];
+      let depth = 0;
+      for (let k = 0; k <= 6; k++) {
+        const q = project(slerp(nodes[i].v, nodes[j].v, k / 6));
+        depth += q[3];
+        pts.push(q);
+      }
+      const path = tiers[Math.max(0, Math.min(2, Math.floor((depth / 7) * 3)))];
+      pts.forEach((q, k) => (k ? path.lineTo(q[0], q[1]) : path.moveTo(q[0], q[1])));
+    }
     ctx.lineWidth = 1;
     ctx.strokeStyle = `rgb(${theme.net})`;
-    for (const [i, j] of links) {
-      ctx.beginPath();
-      let depth = 0;
-      for (let k = 0; k <= 8; k++) {
-        const q = project(slerp(nodes[i].v, nodes[j].v, k / 8));
-        depth += q[3];
-        k ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]);
-      }
-      depth /= 9;
-      ctx.globalAlpha = alpha * (0.04 + 0.32 * depth * depth);
-      ctx.stroke();
-    }
+    tiers.forEach((path, i) => {
+      ctx.globalAlpha = alpha * [0.05, 0.14, 0.32][i];
+      ctx.stroke(path);
+    });
     const img = glowSprite(theme.cyan);
     for (const n of nodes) {
       const q = project(rotate(n.v[0] * 1.02, n.v[1] * 1.02, n.v[2] * 1.02));
@@ -595,6 +609,7 @@
       const vz = Math.sin(a) * Math.cos(o.tilt) * o.radius;
       const q = project([vx, vy * cosP - vz * sinP, vy * sinP + vz * cosP]);
       const img = textSprite(o.text, theme.ink[o.tone], 11);
+      if (!img) continue;
       const s = 0.55 + 0.35 * q[3];
       const w = (img.width / dpr) * s;
       const h = (img.height / dpr) * s;
@@ -622,7 +637,7 @@
     ctx.lineTo(x1 + pad - arm, y1 + 8);
     ctx.stroke();
     const img = textSprite("M ∈ ℝⁿˣᵏ", theme.cyan, 12);
-    ctx.drawImage(img, x0 - pad, y0 - 34, img.width / dpr, img.height / dpr);
+    if (img) ctx.drawImage(img, x0 - pad, y0 - 34, img.width / dpr, img.height / dpr);
   }
 
   // 3장면: 축과 눈금
@@ -649,9 +664,9 @@
     if (k > 0.9) {
       ctx.globalAlpha = 0.55 * (k - 0.9) * 10;
       const tImg = textSprite("t", theme.ink[3], 11);
-      ctx.drawImage(tImg, x1 + 4, bottom - 8, tImg.width / dpr, tImg.height / dpr);
+      if (tImg) ctx.drawImage(tImg, x1 + 4, bottom - 8, tImg.width / dpr, tImg.height / dpr);
       const pImg = textSprite("P&L", theme.ink[3], 11);
-      ctx.drawImage(pImg, x0 - 10, y0 - 30, pImg.width / dpr, pImg.height / dpr);
+      if (pImg) ctx.drawImage(pImg, x0 - 10, y0 - 30, pImg.width / dpr, pImg.height / dpr);
     }
   }
 
@@ -727,9 +742,9 @@
     if (k > 0.96) {
       ctx.globalAlpha = (k - 0.96) * 25;
       const sImg = textSprite("strategy", theme.cyan, 11);
-      ctx.drawImage(sImg, ex - sImg.width / dpr, ey - 26, sImg.width / dpr, sImg.height / dpr);
+      if (sImg) ctx.drawImage(sImg, ex - sImg.width / dpr, ey - 26, sImg.width / dpr, sImg.height / dpr);
       const mImg = textSprite("market", `rgb(${theme.bench})`, 11);
-      ctx.drawImage(mImg, xs(CURVE - 1) - mImg.width / dpr, ym(CURVE - 1) + 8, mImg.width / dpr, mImg.height / dpr);
+      if (mImg) ctx.drawImage(mImg, xs(CURVE - 1) - mImg.width / dpr, ym(CURVE - 1) + 8, mImg.width / dpr, mImg.height / dpr);
     }
   }
 
@@ -781,27 +796,44 @@
   /* ── 한 프레임 ── */
   let start = 0, last = 0, frameId = 0, running = false;
   let chapterShown = -1;
+  const shown = { fade: -1 };
+  const perf = { sum: 0, work: 0, n: 0, slow: 0, fast: 0, raises: 0, started: false };
+  const styleCache = new WeakMap();
+  // 같은 값이면 다시 쓰지 않는다 (스타일 재계산을 줄인다)
+  function setStyle(el, prop, value) {
+    let cache = styleCache.get(el);
+    if (!cache) styleCache.set(el, (cache = {}));
+    if (cache[prop] === value) return;
+    cache[prop] = value;
+    prop.startsWith("--") ? el.style.setProperty(prop, value) : (el.style[prop] = value);
+  }
 
   function frame(now) {
     frameId = 0;
+    // 다음 프레임을 먼저 예약해 둔다 (이번 프레임에서 문제가 생겨도 애니메이션이 멈추지 않게)
+    if (running && !reduce) frameId = requestAnimationFrame(frame);
     if (!start) start = last = now;
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
     const t = reduce ? 12 : (now - start) / 1000;
     const p = reduce ? 0 : scrollProgress();
+    spriteBudget = reduce ? Infinity : 24;
 
     // 글 · 장면 표시 (장면이 바뀔 때만 속성을 바꾼다)
-    const fade = span(p, 0.03, 0.07);
-    copy.style.opacity = String(1 - fade);
-    copy.style.transform = fade ? `translateY(${-24 * fade}px)` : "";
-    copy.style.visibility = fade > 0.99 ? "hidden" : "";
+    const fade = Math.round(span(p, 0.03, 0.07) * 100) / 100;
+    if (fade !== shown.fade) {
+      shown.fade = fade;
+      copy.style.opacity = String(1 - fade);
+      copy.style.transform = fade ? `translateY(${-24 * fade}px)` : "";
+      copy.style.visibility = fade > 0.99 ? "hidden" : "";
+    }
     const chapter = p < 0.08 ? 0 : p < 0.3 ? 1 : p < 0.5 ? 2 : p < 0.74 ? 3 : 4;
     if (chapter !== chapterShown) {
       chapterShown = chapter;
       stage.dataset.chapter = String(chapter);
       progressLabel.textContent = `0${Math.max(1, chapter)}`;
     }
-    progress.style.setProperty("--p", clamp01((p - 0.08) / 0.84).toFixed(3));
+    setStyle(progress, "--p", clamp01((p - 0.08) / 0.84).toFixed(3));
 
     const k1 = clamp01((p - 0.2) / 0.16); // 지구본 → 행렬
     const k2 = span(p, 0.46, 0.08); // 수식 → 점, 축
@@ -831,7 +863,6 @@
 
     ctx.globalCompositeOperation = "source-over";
     ctx.clearRect(0, 0, W, H);
-    drawGlow(globeA);
     ctx.globalCompositeOperation = theme.blend;
     drawGraticule(globeA);
     drawRing(globeA, t);
@@ -879,10 +910,12 @@
 
       if (dotness < 1) {
         const img = q.kind === "mini" ? miniSprite(q.mini, theme.ink[3], theme.ink[5]) : textSprite(q.text, theme.ink[q.tone], q.long ? 11 : 13);
-        const w = (img.width / dpr) * s;
-        const h = (img.height / dpr) * s;
-        ctx.globalAlpha = Math.min(1, a * (1 - dotness));
-        ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+        if (img) {
+          const w = (img.width / dpr) * s;
+          const h = (img.height / dpr) * s;
+          ctx.globalAlpha = Math.min(1, a * (1 - dotness));
+          ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+        }
       }
       if (dotness > 0) {
         const lit = q.curve && c > 0.5;
@@ -902,10 +935,35 @@
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = "source-over";
 
-    label.style.opacity = String(span(p, 0.7, 0.08));
-    hint.style.opacity = reduce ? "0" : String((1 - clamp01(p * 20)) * clamp01((t - 2.4) / 0.6));
+    setStyle(label, "opacity", span(p, 0.7, 0.08).toFixed(2));
+    setStyle(hint, "opacity", reduce ? "0" : ((1 - clamp01(p * 20)) * clamp01((t - 2.4) / 0.6)).toFixed(2));
 
-    if (running && !reduce) frameId = requestAnimationFrame(frame);
+    // 해상도 자동 조절 (0.6초마다 판단)
+    //  - 프레임이 두 번 연달아 밀리면(또는 크게 밀리면) 한 단계 낮춘다
+    //  - 화면 주기를 다 지키고 계산도 가벼운 상태가 세 번 이어지면 한 단계 올린다 (최대 두 번)
+    if (!reduce && t > 0.8) {
+      perf.sum += dt;
+      perf.work += performance.now() - now;
+      if (++perf.n >= 12 && perf.sum >= 0.6) {
+        const avg = perf.sum / perf.n;
+        const work = perf.work / perf.n;
+        perf.sum = perf.work = perf.n = 0;
+        if (avg > 0.021) {
+          perf.fast = 0;
+          if ((++perf.slow >= 2 || avg > 0.03) && level > 0) (level--, (perf.slow = 0));
+        } else if (avg < 0.0175 && work < 5) {
+          perf.slow = 0;
+          if (++perf.fast >= 3 && level < SCALES.length - 1 && perf.raises < 2) (level++, perf.raises++, (perf.fast = 0));
+        } else {
+          perf.slow = perf.fast = 0;
+        }
+        if (SCALES[level] !== scale) {
+          scale = SCALES[level];
+          resizeCanvas();
+        }
+      }
+    }
+
   }
 
   const play = () => {
@@ -918,7 +976,7 @@
     if (running || reduce) play();
   }).observe(hero);
   document.addEventListener("visibilitychange", () => {
-    running = !document.hidden && hero.getBoundingClientRect().bottom > 0;
+    running = !document.hidden && window.scrollY < heroTop + hero.offsetHeight;
     last = performance.now();
     if (running) play();
   });

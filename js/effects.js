@@ -242,9 +242,10 @@
 
     let canvasPairs = [];
     let stickyPairs = [];
+    let livePairs = [];
     let stale = true;
 
-    // 원본을 복제한다. 영상은 두 번 불러오지 않게 빈 상자로 바꾸고, 캔버스는 매 프레임 그림을 옮긴다
+    // 원본을 복제한다. 영상은 두 번 불러오지 않게 빈 상자로 바꾸고, 캔버스는 렌즈 아래 조각만 그림을 옮긴다
     function cloneInto(layer, sources) {
       const frag = document.createDocumentFragment();
       sources.forEach((source) => {
@@ -255,12 +256,18 @@
           el.replaceWith(box);
         });
         copy.querySelectorAll("[data-reveal]").forEach((el) => el.classList.add("is-visible"));
+        copy.querySelectorAll(".hero-stage").forEach((el) => el.classList.add("is-ready"));
         const originals = source.querySelectorAll("canvas");
         copy.querySelectorAll("canvas").forEach((c, i) => canvasPairs.push([originals[i], c]));
         frag.append(copy);
       });
       layer.replaceChildren(frag);
     }
+
+    // 첫 화면 스크립트가 매 프레임 바꾸는 글 · 진행 막대(style)와 장면 번호(data-chapter)는 복제본에도 옮겨 준다
+    // (무대 자체의 style은 위에서 붙어 있는 위치를 맞추느라 쓰므로 건드리지 않는다)
+    const LIVE = ["hero-copy", "hero-progress", "hero-chart-label", "hero-hint"];
+    let chapterPair = [];
 
     function rebuild() {
       canvasPairs = [];
@@ -272,28 +279,56 @@
       cloneInto(fixedLayer, fixedSources);
       const stickyCopies = pageLayer.querySelectorAll("[data-lens-sticky]");
       stickyPairs = [...document.querySelectorAll("main [data-lens-sticky]")].map((el, i) => [el, stickyCopies[i]]);
+      livePairs = LIVE.map((id) => [document.getElementById(id), pageLayer.querySelector(`#${id}`)]).filter(([a, b]) => a && b);
+      chapterPair = [document.getElementById("hero-stage"), pageLayer.querySelector("#hero-stage")];
       stale = false;
     }
 
-    let mx = 0, my = 0, frame = 0, mutationTimer = 0;
+    let mx = 0, my = 0, frame = 0, mutationTimer = 0, scrollTimer = 0;
     const render = () => {
       frame = 0;
+      if (lens.classList.contains("is-scrolling")) return;
       if (stale) rebuild();
+      // 먼저 위치를 모두 읽고 나서 쓴다 (레이아웃 계산이 한 번만 일어나게)
+      const sticky = stickyPairs.map(([from]) => from.getBoundingClientRect().top - from.parentElement.getBoundingClientRect().top);
+      const rects = canvasPairs.map(([from]) => (from && from.width ? from.getBoundingClientRect() : null));
+
       const half = LENS / 2;
       lens.style.transform = `translate3d(${mx - half}px, ${my - half}px, 0)`;
       pageLayer.style.transform = `translate3d(${half - (mx + scrollX) * ZOOM}px, ${half - (my + scrollY) * ZOOM}px, 0) scale(${ZOOM})`;
       fixedLayer.style.transform = `translate3d(${half - mx * ZOOM}px, ${half - my * ZOOM}px, 0) scale(${ZOOM})`;
-      stickyPairs.forEach(([from, to]) => {
-        if (to) to.style.transform = `translateY(${from.getBoundingClientRect().top - from.parentElement.getBoundingClientRect().top}px)`;
+      stickyPairs.forEach(([, to], i) => {
+        if (to) to.style.transform = `translateY(${sticky[i]}px)`;
       });
-      canvasPairs.forEach(([from, to]) => {
-        if (!from || !from.width) return;
-        const r = from.getBoundingClientRect();
-        if (r.bottom < 0 || r.top > innerHeight) return;
-        const ctx = to.getContext("2d");
-        ctx.clearRect(0, 0, to.width, to.height);
-        ctx.drawImage(from, 0, 0);
+      livePairs.forEach(([from, to]) => {
+        if (to.style.cssText !== from.style.cssText) to.style.cssText = from.style.cssText;
       });
+      const [stageFrom, stageTo] = chapterPair;
+      if (stageFrom && stageTo && stageTo.dataset.chapter !== stageFrom.dataset.chapter) stageTo.dataset.chapter = stageFrom.dataset.chapter ?? "";
+
+      // 캔버스는 렌즈가 덮는 조각만 옮긴다 (예전에는 화면 전체 크기 그림을 매번 통째로 복사했다)
+      let live = false;
+      canvasPairs.forEach(([from, to], i) => {
+        const r = rects[i];
+        if (!r || r.bottom < my - half || r.top > my + half || r.right < mx - half || r.left > mx + half) return;
+        if (to.width !== from.width || to.height !== from.height) {
+          to.width = from.width;
+          to.height = from.height;
+        }
+        const k = from.width / r.width; // 캔버스 픽셀 ÷ 화면 px
+        const reach = half / ZOOM + 24; // 렌즈에 비치는 범위 + 굴절로 끌려오는 여유
+        const sx = Math.max(0, Math.floor((mx - r.left - reach) * k));
+        const sy = Math.max(0, Math.floor((my - r.top - reach) * k));
+        const sw = Math.min(from.width - sx, Math.ceil(reach * 2 * k));
+        const sh = Math.min(from.height - sy, Math.ceil(reach * 2 * k));
+        if (sw <= 0 || sh <= 0) return;
+        const g = to.getContext("2d");
+        g.clearRect(sx, sy, sw, sh);
+        g.drawImage(from, sx, sy, sw, sh, sx, sy, sw, sh);
+        live = true;
+      });
+      // 렌즈가 움직이는 그림(지구본) 위에 있으면 마우스가 멈춰 있어도 계속 따라 그린다
+      if (live && lens.classList.contains("is-visible")) schedule();
     };
     const schedule = () => {
       if (!frame) frame = requestAnimationFrame(render);
@@ -304,7 +339,7 @@
     };
 
     // 페이지 내용이 바뀌면 잠시 뒤 다시 복제한다
-    // (마우스 효과용 style 변경과, 렌즈 자신 안에서 생긴 변화는 무시)
+    // (등장 효과처럼 class만 바뀌는 것, 마우스 효과용 style, 렌즈 자신 안의 변화는 무시한다)
     new MutationObserver((records) => {
       if (records.every((r) => lens.contains(r.target))) return;
       clearTimeout(mutationTimer);
@@ -317,14 +352,27 @@
       childList: true,
       characterData: true,
       attributes: true,
-      attributeFilter: ["class", "open", "hidden", "src", "aria-pressed", "aria-current", "data-status", "value"],
+      attributeFilter: ["open", "hidden", "src", "aria-pressed", "aria-current", "data-status", "value"],
     });
 
     addEventListener("resize", () => {
       stale = true;
       schedule();
     });
-    addEventListener("scroll", schedule, { passive: true });
+    // 스크롤하는 동안에는 렌즈를 잠깐 감춘다 (스크롤마다 렌즈 속 페이지를 다시 그리지 않게)
+    addEventListener(
+      "scroll",
+      () => {
+        if (!lens.classList.contains("is-visible")) return;
+        lens.classList.add("is-scrolling");
+        clearTimeout(scrollTimer);
+        scrollTimer = setTimeout(() => {
+          lens.classList.remove("is-scrolling");
+          schedule();
+        }, 160);
+      },
+      { passive: true }
+    );
 
     document.addEventListener(
       "pointermove",
